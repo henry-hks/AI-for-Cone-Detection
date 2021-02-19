@@ -1,1 +1,1 @@
-# AI-for-Cone-Detection
+# AI for Cone Detection
