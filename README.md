@@ -1,5 +1,5 @@
 # AI for Cone Detection by Autonomous Car
-#### by Ho Kai Siu
+### *by Ho Kai Siu*
 
 ## Background
 <p align="justify">
@@ -22,15 +22,16 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 </p>
 
 <p align="center">
- <img src="/Pic/90corner.png" width="500">
+ <img src="/Pic/90corner.png" width="400">
  <br>
  <i>90-degree Turning Corner [1]</i>
 </p>
 
 ## Car Racing
-#### *In car racing, travel time is the first and foremost goal for participants to win the game*
 <p align="center">
- <b>Need *NEW* cone detection algorithm (This Project)</b>
+ <b>In car racing, travel time is the first and foremost goal for participants to win the game</b>
+ <br>
+ Need <b>NEW</b> cone detection algorithm (This Project)
 </p>
 
 ## To Reduce Travel Time
@@ -52,7 +53,7 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
 * Give the corresponding velocity and steering angle
 
   <p align="center">
-   <img src="/Pic/cameraview.png" width="500">
+   <img src="/Pic/cameraview.png" width="400">
   </p>
 
 ## System Design
@@ -80,7 +81,7 @@ The <b>Nivida Jetson TX2</b> and a <b>Depth Camera</b> were utilized. The RealSe
 
 
 <p align="center">
- <img src="/Pic/hsvtrackbar.png" width="500">
+ <img src="/Pic/hsvtrackbar.png" width="600">
 
  <i>Trackbars for setting Lower (L) and Upper (U) H, S, V values</i>
 </p>
@@ -88,7 +89,7 @@ The <b>Nivida Jetson TX2</b> and a <b>Depth Camera</b> were utilized. The RealSe
 ### YOLO Object Detection
 ##### *YOLOv4*
 <p align="center">
- <img src="/Pic/yolov4.png" width="500">
+ <img src="/Pic/yolov4.png" width="400">
  <br>
  <i>MC COCO Object Detection Comparison [3]</i>
 </p>
@@ -151,7 +152,7 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
      <li>Left-Turn Corner</li>
     </ul>
     <li>Based on the sign combination of the slopes of two borders</li>
-    <p align-"center">
+    <p align="center">
      <img src="/Pic/slope_route.png" width="400">
      <br>
      <i>Relationship between the borders' sign combination and the route type</i>
