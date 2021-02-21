@@ -137,13 +137,26 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
 <p align="justify">
  <ol>
   <li>Calculate the slopes of the connected paths</li>
-    <p align="center">
-     <img src="/Pic/slopef.png" width="200">
-     <br>
-     <i>Slope formula</i>
-    </p>
+   <p align="center">
+    <img src="/Pic/slopef.png" width="300">
+    <br>
+    <i>Slope formula</i>
+   </p>
   <li>Determine the direction of the path</li>
-    <ul>Route Type</ul>
+   <ul>
+    <li>Route Type</li>
+    <ul>
+     <li>Straight Route</li>
+     <li>Right-Turn Corner</li>
+     <li>Left-Turn Corner</li>
+    </ul>
+    <li>Based on the sign combination of the slopes of two borders</li>
+    <p align-"center">
+     <img src="/Pic/slope_route.png" width="400">
+     <br>
+     <i>Relationship between the borders' sign combination and the route type</i>
+    </p>
+   </ul>
   <li>Calculate the slopes' change</li>
   <li>Determine the apex</li>
  </ol>
