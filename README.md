@@ -2,9 +2,11 @@
 #### by Ho Kai Siu
 
 ## Background
+<p align="justify">
 This project is part of the research on Autonomous Guiding System for Formula Student Autonomous (the FSA), which is a driverless racing competition for university student. The other four parts of the research are: the ROS simulation, Real-time monitoring system, PCBs designs and STM32 control and the AI for Map Generation, which are the honours projects of other four students. It is hoped our team could combine these five projects into a big system for the autonomous racing car.
+</p>
 
-<img src="/Pic/BG.png" width="400">
+<img align="center" src="/Pic/BG.png" width="400">
 
 ## Inspiration
 The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows the potential of AI guiding system on car racing. The “instant cone pair” detection algorithm was adopted, which would be discussed in the next page. Furthermore, our team had discussed with the PolyU racing team before to address their needs on an autonomous racing car. It is wished that this project could provide the framework of the autonomous racing car to the Racing team for participating in the Formula SAE in China.
