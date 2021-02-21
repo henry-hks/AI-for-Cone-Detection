@@ -44,12 +44,10 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
   </p>
 
 ## Project Objectives
-<p align="justify">
 To design an artificial intelligence (AI) guiding system for autonomous racing car
 * Detect the incoming pattern of the traffic cones
 * Determine the apex of the corner
 * Give the corresponding velocity and steering angle
-</p>
 
   <p align="center">
    <img src:"/Pic/cameraview.png" width="500">
@@ -74,9 +72,10 @@ The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealS
 ##### *with OpenCV*
 <p align="justify">
  Two ranges of HSV values were set for retrieving all the yellow and red color components in the frame. 
-
- (*To further reduce the chance of false-class detection*)
 </p>
+
+(*To further reduce the chance of false-class detection*)
+
 
 <p align="center">
  <img src:"/Pic/hsvtrackbar.png" width="500">
