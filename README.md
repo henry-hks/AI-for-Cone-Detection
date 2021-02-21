@@ -23,8 +23,9 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 <p align="center">
  <img src="/Pic/90corner.png" width="500">
- *90-degree Turning Corner \[1]*
 </p>
+
+*90-degree Turning Corner \[1]*
 
 ## Car Racing
 #### *In car racing, travel time is the first and foremost goal for participants to win the game*
@@ -36,7 +37,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 * At Corner
   * Cutting Corner (**Racing Line**)
-  <p align="center">
+  <p style="text-align: center;">
    <img src:"/Pic/RacingLine.png" width="500">
  
    Racing Line Example \[2]
