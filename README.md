@@ -6,7 +6,9 @@
 This project is part of the research on Autonomous Guiding System for Formula Student Autonomous (the FSA), which is a driverless racing competition for university student. The other four parts of the research are: the ROS simulation, Real-time monitoring system, PCBs designs and STM32 control and the AI for Map Generation, which are the honours projects of other four students. It is hoped our team could combine these five projects into a big system for the autonomous racing car.
 </p>
 
-<img align="center" src="/Pic/BG.png" width="400">
+<p align="center">
+<img src="/Pic/BG.png" width="400">
+</p>
 
 ## Inspiration
 <p align="justify">
@@ -17,7 +19,9 @@ The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows th
 #### by Mr Chan
 Concerning the “instant cone pair” detection algorithm, it only focus on the first cone pair in front of the car. The detection would be operated pair by pair, which means that, the car only detect for the next cone pair after passing through the detected pair. The midpoint of the cone pair is calculated and determined for the car to pass through. This approach would give some problems to the system. For example, bottlenecking the car travel velocity since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time. Moreover, the system is unable to handle a 90-degree corner as stated in Chan’s project.
 
-<img align="center" src="/Pic/90corner.png" width="400">
+<p align="center">
+<img src="/Pic/90corner.png" width="400">
+</p>
 
 90-degree Turning Corner \[1]
 
@@ -30,8 +34,9 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
   * Power of Engine (**Horsepower**)
 * At Corner
   * Cutting Corner (**Racing Line**)
-
+  <p align="center">
   ![Racing Line Example [2]](/Pic/RacingLine.png)
+  </p>
 
 ## Project Objectives
 To design an artificial intelligence (AI) guiding system for autonomous racing car
