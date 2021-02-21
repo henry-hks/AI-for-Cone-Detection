@@ -82,5 +82,5 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
 
 ### Apex Detection
 1. Calculate the slopes of the connected paths
-  * $\frac{ya-yb}{xa-xb}$
+'''* $\frac{ya-yb}{xa-xb}$
 
