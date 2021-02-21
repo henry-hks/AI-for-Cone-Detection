@@ -7,7 +7,7 @@ This project is part of the research on Autonomous Guiding System for Formula St
 </p>
 
 <p align="center">
-<img src="/Pic/BG.png" width="500">
+ <img src="/Pic/BG.png" width="500">
 </p>
 
 ## Inspiration
@@ -22,9 +22,9 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 </p>
 
 <p align="center">
-<img src="/Pic/90corner.png" width="500">
-
-*90-degree Turning Corner \[1]*
+ <img src="/Pic/90corner.png" width="500">
+ 
+ *90-degree Turning Corner \[1]*
 </p>
 
 ## Car Racing
@@ -38,9 +38,9 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 * At Corner
   * Cutting Corner (**Racing Line**)
   <p align="center">
-  <img src:"/Pic/RacingLine.png" width="500">
+   <img src:"/Pic/RacingLine.png" width="500">
  
-  Racing Line Example \[2]
+   Racing Line Example \[2]
   </p>
 
 ## Project Objectives
@@ -52,12 +52,12 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
 </p>
 
   <p align="center">
-  <img src:"/Pic/cameraview.png" width="500">
+   <img src:"/Pic/cameraview.png" width="500">
   </p>
 
 ## System Design
 <p align="center">
-<img src:"/Pic/systemdesign.png" width="500">
+ <img src:"/Pic/systemdesign.png" width="500">
 </p>
 
 <p align="justify">
@@ -73,15 +73,15 @@ The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealS
 ### HSV Color Masking
 ##### *with OpenCV*
 <p align="justify">
-Two ranges of HSV values were set for retrieving all the yellow and red color components in the frame. 
+ Two ranges of HSV values were set for retrieving all the yellow and red color components in the frame. 
 
-(*To further reduce the chance of false-class detection*)
+ (*To further reduce the chance of false-class detection*)
 </p>
 
 <p align="center">
-<img src:"/Pic/hsvtrackbar.png" width="500">
+ <img src:"/Pic/hsvtrackbar.png" width="500">
 
-*Trackbars for setting Lower (L) and Upper (U) H, S, V values*
+ *Trackbars for setting Lower (L) and Upper (U) H, S, V values*
 </p>
 
 
@@ -89,26 +89,26 @@ Two ranges of HSV values were set for retrieving all the yellow and red color co
 ### YOLO Object Detection
 ##### *YOLOv4*
 <p align="center">
-<img src:"/Pic/yolov4.png" width="500">
+ <img src:"/Pic/yolov4.png" width="500">
 
-MC COCO Object Detection Comparison \[3]
+ MC COCO Object Detection Comparison \[3]
 </p>
 
 <p align="justify">
-It was trained with a custom training dataset (300 RGB images of cones with different scales). 
-* 2 classes (*Yellow Cone, Red Cone*)
-* 416x416 network size
-* 64 branch size
-* 32 subdivisions
-* 6000 max_branch
-* 3200, 3600 steps
-* (2 classes + 5) x 3 = 21 filters before each YOLO layer
+ It was trained with a custom training dataset (300 RGB images of cones with different scales). 
+ * 2 classes (*Yellow Cone, Red Cone*)
+ * 416x416 network size
+ * 64 branch size
+ * 32 subdivisions
+ * 6000 max_branch
+ * 3200, 3600 steps
+ * (2 classes + 5) x 3 = 21 filters before each YOLO layer
 </p>
 
 <p align="center">
-<img src:"/Pic/loss.jpeg" width="500">
+ <img src:"/Pic/loss.jpeg" width="500">
  
-Loss
+ Loss
 </p>
 
 <p align="justify">
@@ -116,9 +116,9 @@ Since two masked frames are passed to the YOLO, two arrays of centres coordinate
 </p>
 
 <p align="center">
-<img src:"/Pic/detectedcenter.png" width="500">
+ <img src:"/Pic/detectedcenter.png" width="500">
 
-Detected Cone’s boundary box with centre points marker
+ Detected Cone’s boundary box with centre points marker
 </p>
 
 ### Cone-to-Path (Cone Connection) Algorithm
@@ -130,17 +130,17 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
 </p>
 
 <p align="center">
-<img src:"/Pic/connect6.png" width="500">
+ <img src:"/Pic/connect6.png" width="500">
 
-Connections of the First Six Cone
+ Connections of the First Six Cone
 </p>
 
 ### Apex Detection
 <p align="justify">
-1. Calculate the slopes of the connected paths
-   <p align="center">
-   <img src:"/Pic/slopef.png" width="500">
-
-   Slope formula
-   </p>
+ 1. Calculate the slopes of the connected paths
+    <p align="center">
+     <img src:"/Pic/slopef.png" width="500">
+    
+     Slope formula
+    </p>
 </p>
