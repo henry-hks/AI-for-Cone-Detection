@@ -17,7 +17,7 @@ The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows th
 #### by Mr Chan
 Concerning the “instant cone pair” detection algorithm, it only focus on the first cone pair in front of the car. The detection would be operated pair by pair, which means that, the car only detect for the next cone pair after passing through the detected pair. The midpoint of the cone pair is calculated and determined for the car to pass through. This approach would give some problems to the system. For example, bottlenecking the car travel velocity since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time. Moreover, the system is unable to handle a 90-degree corner as stated in Chan’s project.
 
-<img align="center src="/Pic/90corner.png" width="400)
+<img align="center src="/Pic/90corner.png" width="400")
 
 90-degree Turning Corner \[1]
 
