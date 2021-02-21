@@ -23,6 +23,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 <p align="center">
  <img src="/Pic/90corner.png" width="500">
+ <br>
  <i>90-degree Turning Corner [1]</i>
 </p>
 
@@ -38,7 +39,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
   * Cutting Corner (**Racing Line**)
   <p style="text-align: center;">
    <img src="/Pic/RacingLine.png" width="500">
- 
+   <br>
    <i>Racing Line Example [2]</i>
   </p>
 
