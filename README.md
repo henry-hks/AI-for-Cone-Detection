@@ -26,7 +26,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 </p>
 
 <p align="center">
- *90-degree Turning Corner \[1]*
+ <i>90-degree Turning Corner [1]</i>
 </p>
 
 ## Car Racing
