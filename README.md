@@ -9,13 +9,16 @@ This project is part of the research on Autonomous Guiding System for Formula St
 <img align="center" src="/Pic/BG.png" width="400">
 
 ## Inspiration
+<p align="justify">
 The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows the potential of AI guiding system on car racing. The “instant cone pair” detection algorithm was adopted, which would be discussed in the next page. Furthermore, our team had discussed with the PolyU racing team before to address their needs on an autonomous racing car. It is wished that this project could provide the framework of the autonomous racing car to the Racing team for participating in the Formula SAE in China.
+</p>
 
-## "Instant Cone Pair" Detection (Old 
+## "Instant Cone Pair" Detection (Old)
 #### by Mr Chan
 Concerning the “instant cone pair” detection algorithm, it only focus on the first cone pair in front of the car. The detection would be operated pair by pair, which means that, the car only detect for the next cone pair after passing through the detected pair. The midpoint of the cone pair is calculated and determined for the car to pass through. This approach would give some problems to the system. For example, bottlenecking the car travel velocity since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time. Moreover, the system is unable to handle a 90-degree corner as stated in Chan’s project.
 
-<img src="/Pic/90corner.png" width="400)
+<img align="center src="/Pic/90corner.png" width="400)
+
 90-degree Turning Corner \[1]
 
 ## Car Racing
