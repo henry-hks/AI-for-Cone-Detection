@@ -16,7 +16,7 @@ The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows th
 </p>
 
 ## "Instant Cone Pair" Detection (Old)
-#### by Mr Chan
+#### *by Mr Chan*
 <p align="justify">
 Concerning the “instant cone pair” detection algorithm, it only focus on the first cone pair in front of the car. The detection would be operated pair by pair, which means that, the car only detect for the next cone pair after passing through the detected pair. The midpoint of the cone pair is calculated and determined for the car to pass through. This approach would give some problems to the system. For example, bottlenecking the car travel velocity since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time. Moreover, the system is unable to handle a 90-degree corner as stated in Chan’s project.
 </p>
@@ -29,7 +29,9 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 ## Car Racing
 #### *In car racing, travel time is the first and foremost goal for participants to win the game*
-#### Need *NEW* cone detection algorithm (This Project)
+<p align="center">
+ <b>Need *NEW* cone detection algorithm (This Project)</b>
+</p>
 
 ## To Reduce Travel Time
 * In straight Path
@@ -55,7 +57,7 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
 
 ## System Design
 <p align="center">
- <img src="/Pic/systemdesign.png" width="500">
+ <img src="/Pic/systemdesign.png" width="700">
 </p>
 
 <p align="justify">
@@ -64,7 +66,7 @@ First, a stream of video frames are inputted into the system. Two HSV color mask
 
 ## Hardware
 <p align="justify">
-The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealSense D435i was used instead of RGB camera to give additional depth data of cone for more accurate cone-to-path connection
+The <b>Nivida Jetson TX2</b> and a <b>Depth Camera</b> were utilized. The RealSense D435i was used instead of RGB camera to give additional depth data of cone for more accurate cone-to-path connection.
 </p>
 
 ## Implementation
@@ -72,42 +74,39 @@ The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealS
 ##### *with OpenCV*
 <p align="justify">
  Two ranges of HSV values were set for retrieving all the yellow and red color components in the frame. 
+ <br>
+ (<i>To further reduce the chance of false-class detection</i>)
 </p>
-
-(*To further reduce the chance of false-class detection*)
 
 
 <p align="center">
  <img src="/Pic/hsvtrackbar.png" width="500">
 
- *Trackbars for setting Lower (L) and Upper (U) H, S, V values*
+ <i>Trackbars for setting Lower (L) and Upper (U) H, S, V values</i>
 </p>
-
-
 
 ### YOLO Object Detection
 ##### *YOLOv4*
 <p align="center">
  <img src="/Pic/yolov4.png" width="500">
-
- MC COCO Object Detection Comparison \[3]
+ <br>
+ <i>MC COCO Object Detection Comparison [3]</i>
 </p>
 
-<p align="justify">
- It was trained with a custom training dataset (300 RGB images of cones with different scales). 
- * 2 classes (*Yellow Cone, Red Cone*)
- * 416x416 network size
- * 64 branch size
- * 32 subdivisions
- * 6000 max_branch
- * 3200, 3600 steps
- * (2 classes + 5) x 3 = 21 filters before each YOLO layer
-</p>
+
+It was trained with a custom training dataset (300 RGB images of cones with different scales). 
+* 2 classes (*Yellow Cone, Red Cone*)
+* 416x416 network size
+* 64 branch size
+* 32 subdivisions
+* 6000 max_branch
+* 3200, 3600 steps
+* (2 classes + 5) x 3 = 21 filters before each YOLO layer
 
 <p align="center">
  <img src="/Pic/loss.jpeg" width="500">
- 
- Loss
+ <br>
+ <i>Loss</i>
 </p>
 
 <p align="justify">
@@ -116,29 +115,34 @@ Since two masked frames are passed to the YOLO, two arrays of centres coordinate
 
 <p align="center">
  <img src="/Pic/detectedcenter.png" width="500">
-
- Detected Cone’s boundary box with centre points marker
+ <br>
+ <i>Detected Cone’s boundary box with centre points marker</i>
 </p>
 
 ### Cone-to-Path (Cone Connection) Algorithm
 ##### *Transform unrelated coordinates of cone centers into related borders*
 <p align="justify">
-In the view of the car. The first pair of cones (**root cones**) possess the largest boundary box area and y-coordinate. The system filtered the detected cones by an area threshold of 600 and confident level of 0.6. The remaining cone centres were then connected in descending order of their y-coordinates.
-
-Yet, the image would appear to converge at a vanishing point. Overlapping of cones near the point would occur, which degrade the cone connection. Therefore, this project would focus on the **first six cones only**.
+ In the view of the car. The first pair of cones (<i>root cones</i>) possess the largest boundary box area and y-coordinate. The system filtered the detected cones by an area threshold of 600 and confident level of 0.6. The remaining cone centres were then connected in descending order of their y-coordinates.
+<br>
+Yet, the image would appear to converge at a vanishing point. Overlapping of cones near the point would occur, which degrade the cone connection. Therefore, this project would focus on the <b>first six cones only</b>.
 </p>
 
 <p align="center">
  <img src="/Pic/connect6.png" width="500">
-
- Connections of the First Six Cone
+ <br>
+ <i>Connections of the First Six Cone</i>
 </p>
 
 ### Apex Detection
 <p align="justify">
- 1. Calculate the slopes of the connected paths
-    <p align="center">
-     <img src="/Pic/slopef.png" width="500">
-     Slope formula
-    </p>
+ <ol>
+  <li>Calculate the slopes of the connected paths</li>
+    <ul>
+     <p align="center">
+      <img src="/Pic/slopef.png" width="500">
+      <br>
+      <i>Slope formula</i>
+     </p>
+    </ul>
+ </ol>
 </p>
