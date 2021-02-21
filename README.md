@@ -4,12 +4,14 @@
 ## Background
 This project is part of the research on Autonomous Guiding System for Formula Student Autonomous (the FSA), which is a driverless racing competition for university student. The other four parts of the research are: the ROS simulation, Real-time monitoring system, PCBs designs and STM32 control and the AI for Map Generation, which are the honours projects of other four students. It is hoped our team could combine these five projects into a big system for the autonomous racing car.
 
-![Autonomous Guiding System for FSA](/Pic/BG.png)
+<img src="/Pic/BG.png" width="200">
+
+Autonomous Guiding System for FSA
 
 ## Inspiration
 The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows the potential of AI guiding system on car racing. The “instant cone pair” detection algorithm was adopted, which would be discussed in the next page. Furthermore, our team had discussed with the PolyU racing team before to address their needs on an autonomous racing car. It is wished that this project could provide the framework of the autonomous racing car to the Racing team for participating in the Formula SAE in China.
 
-## "Instant Cone Pair" Detection
+## "Instant Cone Pair" Detection (Old 
 #### by Mr Chan
 Concerning the “instant cone pair” detection algorithm, it only focus on the first cone pair in front of the car. The detection would be operated pair by pair, which means that, the car only detect for the next cone pair after passing through the detected pair. The midpoint of the cone pair is calculated and determined for the car to pass through. This approach would give some problems to the system. For example, bottlenecking the car travel velocity since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time. Moreover, the system is unable to handle a 90-degree corner as stated in Chan’s project.
 
@@ -17,6 +19,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 ## Car Racing
 ### *In car racing, travel time is the first and foremost goal for participants to win the game*
+### Need *NEW* cone detection algorithm (This Project)
 
 ## To Reduce Travel Time
 * In straight Path
@@ -24,7 +27,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 * At Corner
   * Cutting Corner (**Racing Line**)
 
-![Racing Line Example [2]](/Pic/RacingLine.png)
+  ![Racing Line Example [2]](/Pic/RacingLine.png)
 
 ## Project Objectives
 To design an artificial intelligence (AI) guiding system for autonomous racing car
@@ -32,7 +35,7 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
 * Determine the apex of the corner
 * Give the corresponding velocity and steering angle
 
-![Camera View of the Racing Car](/Pic/cameraview.png)
+  ![Camera View of the Racing Car](/Pic/cameraview.png)
 
 ## System Design
 ![System Flow](/Pic/systemdesign.png)
