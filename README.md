@@ -23,9 +23,6 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 <p align="center">
  <img src="/Pic/90corner.png" width="500">
-</p>
-
-<p align="center">
  <i>90-degree Turning Corner [1]</i>
 </p>
 
@@ -40,9 +37,9 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 * At Corner
   * Cutting Corner (**Racing Line**)
   <p style="text-align: center;">
-   <img src:"/Pic/RacingLine.png" width="500">
+   <img src="/Pic/RacingLine.png" width="500">
  
-   Racing Line Example \[2]
+   <i>Racing Line Example [2]</i>
   </p>
 
 ## Project Objectives
@@ -52,12 +49,12 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
 * Give the corresponding velocity and steering angle
 
   <p align="center">
-   <img src:"/Pic/cameraview.png" width="500">
+   <img src="/Pic/cameraview.png" width="500">
   </p>
 
 ## System Design
 <p align="center">
- <img src:"/Pic/systemdesign.png" width="500">
+ <img src="/Pic/systemdesign.png" width="500">
 </p>
 
 <p align="justify">
@@ -80,7 +77,7 @@ The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealS
 
 
 <p align="center">
- <img src:"/Pic/hsvtrackbar.png" width="500">
+ <img src="/Pic/hsvtrackbar.png" width="500">
 
  *Trackbars for setting Lower (L) and Upper (U) H, S, V values*
 </p>
@@ -90,7 +87,7 @@ The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealS
 ### YOLO Object Detection
 ##### *YOLOv4*
 <p align="center">
- <img src:"/Pic/yolov4.png" width="500">
+ <img src="/Pic/yolov4.png" width="500">
 
  MC COCO Object Detection Comparison \[3]
 </p>
@@ -107,7 +104,7 @@ The Nivida Jetson TX2 and a RGB camera were utilised. A Depth Camera, like RealS
 </p>
 
 <p align="center">
- <img src:"/Pic/loss.jpeg" width="500">
+ <img src="/Pic/loss.jpeg" width="500">
  
  Loss
 </p>
@@ -117,7 +114,7 @@ Since two masked frames are passed to the YOLO, two arrays of centres coordinate
 </p>
 
 <p align="center">
- <img src:"/Pic/detectedcenter.png" width="500">
+ <img src="/Pic/detectedcenter.png" width="500">
 
  Detected Cone’s boundary box with centre points marker
 </p>
@@ -131,7 +128,7 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
 </p>
 
 <p align="center">
- <img src:"/Pic/connect6.png" width="500">
+ <img src="/Pic/connect6.png" width="500">
 
  Connections of the First Six Cone
 </p>
@@ -140,8 +137,7 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
 <p align="justify">
  1. Calculate the slopes of the connected paths
     <p align="center">
-     <img src:"/Pic/slopef.png" width="500">
-    
+     <img src="/Pic/slopef.png" width="500">
      Slope formula
     </p>
 </p>
