@@ -24,7 +24,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 * At Corner
   * Cutting Corner (**Racing Line**)
 
-![Racing Line Example [2]](/Pic/Racing Line.png)
+![Racing Line Example [2]](/Pic/RacingLine.png)
 
 ## Project Objectives
 To design an artificial intelligence (AI) guiding system for autonomous racing car
@@ -79,5 +79,5 @@ Yet, the image would appear to converge at a vanishing point. Overlapping of con
 
 ### Apex Detection
 1. Calculate the slopes of the connected paths
-$\frac{ya-yb}{xa-xb}$
+ - $\frac{ya-yb}{xa-xb}$
 
