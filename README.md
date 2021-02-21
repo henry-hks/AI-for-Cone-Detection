@@ -37,7 +37,7 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 * At Corner
   * Cutting Corner (**Racing Line**)
-  <p style="text-align: center;">
+  <p align="center">
    <img src="/Pic/RacingLine.png" width="500">
    <br>
    <i>Racing Line Example [2]</i>
