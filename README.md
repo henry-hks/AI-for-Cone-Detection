@@ -1,9 +1,9 @@
 # AI for Cone Detection by Autonomous Car
-### *by Ho Kai Siu*
+### *by Ho Kai Siu, Henry*
 
 ## Background
 <p align="justify">
-This project is part of the research on Autonomous Guiding System for Formula Student Autonomous (the FSA), which is a driverless racing competition for university student. The other four parts of the research are: the ROS simulation, Real-time monitoring system, PCBs designs and STM32 control and the AI for Map Generation, which are the honours projects of other four students. It is hoped our team could combine these five projects into a big system for the autonomous racing car.
+This project is part of the research on Autonomous Guiding System for Formula Student Autonomous (the <b>FSA</b>), which is a driverless racing competition for university student. The research team consists of five students. The other four parts of the research are: <i>the ROS simulation, Real-time monitoring system, PCBs designs and STM32 control and the AI for Map Generation</i>, which are the honours projects of other four students. It is hoped our team could combine these five projects into a big system for the autonomous racing car.
 </p>
 
 <p align="center">
@@ -12,13 +12,23 @@ This project is part of the research on Autonomous Guiding System for Formula St
 
 ## Inspiration
 <p align="justify">
-The research is inspired by Mr Chan Tai Wing’s project in 2017, which shows the potential of AI guiding system on car racing. The “instant cone pair” detection algorithm was adopted, which would be discussed in the next page. Furthermore, our team had discussed with the PolyU racing team before to address their needs on an autonomous racing car. It is wished that this project could provide the framework of the autonomous racing car to the Racing team for participating in the Formula SAE in China.
+The research is inspired by Mr Chan Tai Wing’s project [1] in 2017, which shows the potential of AI guiding system on car racing. The “instant cone pair” detection algorithm was adopted, which would be discussed in the next page. Furthermore, our team had discussed with the PolyU racing team before to address their needs on an autonomous racing car. It is wished that this project could provide the framework of the autonomous racing car to the Racing team for participating in the Formula SAE in China.
 </p>
 
 ## "Instant Cone Pair" Detection (Old)
 #### *by Mr Chan*
 <p align="justify">
-Concerning the “instant cone pair” detection algorithm, it only focus on the first cone pair in front of the car. The detection would be operated pair by pair, which means that, the car only detect for the next cone pair after passing through the detected pair. The midpoint of the cone pair is calculated and determined for the car to pass through. This approach would give some problems to the system. For example, bottlenecking the car travel velocity since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time. Moreover, the system is unable to handle a 90-degree corner as stated in Chan’s project.
+ <ul>
+  <li>Focus on the first cone pair in front of the car</li>
+  <li>The detection would be operated pair by pair</li>
+  <li>The midpoint of the cone pair is calculated and determined for the car to pass through</li>
+  <li><b>Limitations</b></li>
+  <ul>
+   <li>Bottlenecking the car travel velocity</li>
+   <br>
+       Since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time.
+   <li>Inability of 90-degree corner determination and execution</li>
+  </ul
 </p>
 
 <p align="center">
