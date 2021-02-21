@@ -23,7 +23,6 @@ Concerning the “instant cone pair” detection algorithm, it only focus on the
 
 <p align="center">
  <img src="/Pic/90corner.png" width="500">
- 
  *90-degree Turning Corner \[1]*
 </p>
 
