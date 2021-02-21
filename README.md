@@ -25,7 +25,6 @@ The research is inspired by Mr Chan Tai Wing’s project [1] in 2017, which show
   <li><b>Limitations</b></li>
   <ul>
    <li>Bottlenecking the car travel velocity</li>
-   <br>
        Since the car drive through the midpoint of the cone pair, which don’t give the shortest travel time.
    <li>Inability of 90-degree corner determination and execution</li>
   </ul
