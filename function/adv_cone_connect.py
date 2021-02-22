@@ -196,10 +196,35 @@ def get_directions_array(yolo_slopes_yellow, yolo_slopes_red):
   
   return directions
 
-def apex_detect(detected_both, cone_connect_sequence, slopes_arr, direction):
-  if len(slopes_arr) == 2:
-    slopes_difference = slopes_arr[0] - slopes_arr[1]
-    if slopes[0]
+def apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_sequence, yolo_slopes_yellow, yolo_slopes_red, directions):
+  apex = 0 # 0=no apex; 1=apex detected
+  side = 0 # -1=left; 0=straight; 1=right
+  apex_coor = []
+  if len(directions) == 2:
+    if -2 <= direction[0][0] <= -1 and -2 <= direction[0][1] <= -1 and -2 <= direction[1][0] <= -1 and -2 <= direction[1][1] <= -1:
+      side = -1 #left
+    if 1 <= direction[0][0] <= 2 and 1 <= direction[0][1] <= 2 and 1 <= direction[1][0] <= 2 and 1 <= direction[1][1] <= 2:
+      side = 1 #right
+  
+  if side == -1:
+    if len(yolo_slopes_yellow) == 2:
+      slopes_difference = abs(yolo_slopes_yellow[0] - yolo_slopes_yellow[1])
+      if slopes_difference >= 0.2:
+        apex = 1
+  
+  if side == 1:
+    if len(yolo_slopes_red) == 2:
+      slopes_difference = abs(yolo_slopes_red[0] - yolo_slopes_red[1])
+      if slopes_difference >= 0.2:
+        apex = 1
+  
+  if apex == 1:
+    if side == -1:
+      apex_coor.append(yellow_cone_connect_sequence[1])
+    if side == 1:
+      apex_coor.append(red_cone_connect_sequence[1])
+  
+  return apex_coor
 
 
 

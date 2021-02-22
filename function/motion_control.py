@@ -23,11 +23,10 @@ def steering(yolo_slopes_yellow):
 
 def steering_2(reference_point, center_with_depth):
     #fuzzy inferencing based on x coordinates
-    
     #the x coordinates difference between the cone centers and reference point
     d0 = center_with_depth[0][0][0] - reference_point[0] 
     d1 = center_with_depth[1][0][0] - reference_point[0] 
     d2 = center_with_depth[2][0][0] - reference_point[0] 
     deviation = [d0, d1, d2]
 
-def steering_3()
+def steering_3(apex_coor, reference_point):
