@@ -2,6 +2,8 @@ import cv2
 import numpy as np 
 import fuzzy
 
+
+
 def steering(yolo_slopes_yellow):
     #fuzzy inferencing based on slopes
     #yellow

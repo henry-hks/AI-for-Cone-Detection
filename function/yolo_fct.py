@@ -1,37 +1,15 @@
 import cv2
 import numpy as np 
-import system_filter as sf 
 import sys
 sys.path.append("/home/fyp/darknet")
 import darknet as dn 
-import darknet_images as dni
-
-# def get_detection(image, mask, net, class_colors, name):
-#   name = [name]
-#   image_for = image
-#   new_image = cv2.bitwise_and(image_for,image_for, mask=mask)
-#   image_for, detections = dni.image_detection_(new_image, net, name, class_colors, 0.5)
-#   return detections
-
-#low pass filter
-T = 5.0       #Sample period
-fs = 30.0     #Sample Rate (Hz)
-cutoff = 2    #Cutoff frequency of the filter (Hz)
-nyq = 0.5*fs  #Nyquist rate
-order = 2     #order of LPF
-n = int(T*fs) #Total number of samples
+import darknet_images as dni 
 
 def cone_detect(detected_both, image, mask, net, class_colors, name):
     name = [name]
     image_for = image
     new_image = cv2.bitwise_and(image_for,image_for, mask=mask)
     image_for, detections = dni.image_detection_(new_image, net, name, class_colors, 0.5)
-
-    #low pass filtering
-    detections_np = np.array(detections)
-    LPF_detections = sf.butter_lowpass_filter(detections_np, cutoff, fs, order, nyq)
-    print(" LPF_detections: ", LPF_detections)
-
     detected = image_for
     yolo_cones_center = []
     for label, confidence, bbox in detections:
@@ -46,7 +24,7 @@ def cone_detect(detected_both, image, mask, net, class_colors, name):
         cv2.rectangle(detected_both, (left, top), (right, bottom), (255,0,100), 1)
         cv2.putText(detected_both, "{} [{:.2f}]".format(label, float(confidence)),
                     (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                    (255,0,100), 2)
+                    (255,0,100), 1)
         
         #get the centers of the bbox
         centerx = int((left + right)/2)

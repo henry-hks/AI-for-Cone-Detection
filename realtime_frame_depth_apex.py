@@ -129,8 +129,8 @@ try:
                 mask_red = hsv_fct.create_mask(hsv, low_red, high_red)
                 mask_red = mask_red - mask_yellow
 
-                cv2.imshow("mask yellow", mask_yellow)
-                cv2.imshow("mask red", mask_red)
+                # cv2.imshow("mask yellow", mask_yellow)
+                # cv2.imshow("mask red", mask_red)
 
                 #detect for both cone
                 image_for_both = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -151,12 +151,13 @@ try:
                 #connect the yellow & red cone centers 
                 # detected_both, detected_yellow, yolo_slopes_yellow = yolo_fct.cone_connect(detected_yellow, detected_both, yolo_yellow_cones_center)
                 # detected_both, detected_red, yolo_slopes_red = yolo_fct.cone_connect(detected_red, detected_both, yolo_red_cones_center)
-                
                 #connect on the advanced img (with depth)
                 advanced, yellow_cone_connect_sequence, yolo_slopes_yellow = acc.cone_connect_with_depth(advanced, center_with_depth_yellow, 0)
                 advanced, red_cone_connect_sequence, yolo_slopes_red = acc.cone_connect_with_depth(advanced, center_with_depth_red, 1)
                 print("slope yellow: ", yolo_slopes_yellow)
                 print("slope red: ", yolo_slopes_red)
+                print("real coor yellow: ", yellow_cone_connect_sequence)
+                print("real coor red: ", red_cone_connect_sequence)
                 
 
                 #fuzzy logic
@@ -174,7 +175,7 @@ try:
                 
                 
                 fps = 1 / (time.time() - start_time)
-                cv2.putText(advanced,"FPS: {}".format(fps), (10,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1)
+                cv2.putText(advanced,"FPS: {}".format(fps), (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
                 start_time = time.time()
                 # cv2.imshow("img", image)
                 # cv2.imshow("overall detection ",detected_both)
