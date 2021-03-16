@@ -2,7 +2,31 @@ import cv2
 import numpy as np 
 import fuzzy
 
+# def motion_control(apex_coor, side):
+#   if apex_coor: #if have apex
+#     if apex_coor[2][0] 
 
+def path_finding(yellow_cone_connect_sequence, red_cone_connect_sequence):
+  #based on 3D x-coordinates
+  if len(yellow_cone_connect_sequence) == 3 and (red_cone_connect_sequence) == 3:
+    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+    
+    diff_thres_1 = 0.2
+    diff_thres_2 = 
+
+    for i in range(2):
+      if yellow_x_coor_diff_array[i] < 0:
+        if red_x_coor_diff_array[i] > 0:
+          if -0.2 < yellow_cone_connect_sequence[i]:
+            
+          if 2 >= yellow_x_coor_diff_array[i] >= 0.2 or 2 >= red_x_coor_diff_array[i] >= 0.2:
+            direction = [-1,-1]
+
+      elif yellow_x_coor_diff_array[i] > 0:
+        if red_x_coor_diff_array[i] > 0:
+          if 2 >= yellow_x_coor_diff_array[i] >= 0.2 or 2 >= red_x_coor_diff_array[i] >= 0.2:
+            direction = [-1,-1]
 
 def steering(yolo_slopes_yellow):
     #fuzzy inferencing based on slopes

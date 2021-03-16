@@ -14,6 +14,7 @@ import darknet_images as dni
 sys.path.append("/home/fyp/function")
 import hsv_fct, yolo_fct
 import adv_cone_connect as acc 
+# import system_filter as sf 
 
 net, class_names, class_colors = dn.load_network("/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.cfg","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/cones.data","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.weights",batch_size=1)
 # class_names = ["Yellow_Cone","Red_Cone"]
@@ -22,24 +23,24 @@ network_height = dn.network_height(net)
 yolo_rp = ([network_width/2, network_height/2])
 
 
-def nothing(x):
-    pass
+# def nothing(x):
+#     pass
 
-cv2.namedWindow("Yellow Cone")
-cv2.createTrackbar("L-H", "Yellow Cone", 4, 180, nothing)
-cv2.createTrackbar("L-S", "Yellow Cone", 187, 255, nothing)
-cv2.createTrackbar("L-V", "Yellow Cone", 135, 255, nothing)
-cv2.createTrackbar("U-H", "Yellow Cone", 78, 180, nothing)
-cv2.createTrackbar("U-S", "Yellow Cone", 255, 255, nothing)
-cv2.createTrackbar("U-V", "Yellow Cone", 255, 255, nothing)
+# cv2.namedWindow("Yellow Cone")
+# cv2.createTrackbar("L-H", "Yellow Cone", 4, 180, nothing)
+# cv2.createTrackbar("L-S", "Yellow Cone", 187, 255, nothing)
+# cv2.createTrackbar("L-V", "Yellow Cone", 135, 255, nothing)
+# cv2.createTrackbar("U-H", "Yellow Cone", 78, 180, nothing)
+# cv2.createTrackbar("U-S", "Yellow Cone", 255, 255, nothing)
+# cv2.createTrackbar("U-V", "Yellow Cone", 255, 255, nothing)
 
-cv2.namedWindow("Red Cone")
-cv2.createTrackbar("L-H", "Red Cone", 0, 180, nothing)
-cv2.createTrackbar("L-S", "Red Cone", 197, 255, nothing)
-cv2.createTrackbar("L-V", "Red Cone", 110, 255, nothing)
-cv2.createTrackbar("U-H", "Red Cone", 180, 180, nothing)
-cv2.createTrackbar("U-S", "Red Cone", 255, 255, nothing)
-cv2.createTrackbar("U-V", "Red Cone", 255, 255, nothing)
+# cv2.namedWindow("Red Cone")
+# cv2.createTrackbar("L-H", "Red Cone", 0, 180, nothing)
+# cv2.createTrackbar("L-S", "Red Cone", 197, 255, nothing)
+# cv2.createTrackbar("L-V", "Red Cone", 110, 255, nothing)
+# cv2.createTrackbar("U-H", "Red Cone", 180, 180, nothing)
+# cv2.createTrackbar("U-S", "Red Cone", 255, 255, nothing)
+# cv2.createTrackbar("U-V", "Red Cone", 255, 255, nothing)
 
 #read image and depthmap
 # path_img = "/home/fyp/Vincent/darknet/data/img/72.jpg"
@@ -68,6 +69,7 @@ align_to = rs.stream.color
 align = rs.align(align_to)
 #color for drawing boundary box
 #colors = darknet.class_colors(ClassNameMain)
+apex_coor_array = []
 
 try:
         frame_count = 0
@@ -90,8 +92,8 @@ try:
 
                 # Convert images to numpy arrays
                 depthimg = np.asanyarray(depth_frame.get_data())
+                depthimg_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depthimg, alpha=8), cv2.COLORMAP_JET)
                 image = np.asanyarray(color_frame.get_data())
-
 
                 # depthimg = cv2.resize(depthimg_ori, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -102,19 +104,33 @@ try:
 
                 colors = [(255,0,100), (120,100,255)]
                 #get trackbars values
-                y_l_h = cv2.getTrackbarPos("L-H", "Yellow Cone")
-                y_l_s = cv2.getTrackbarPos("L-S", "Yellow Cone")
-                y_l_v = cv2.getTrackbarPos("L-V", "Yellow Cone")
-                y_u_h = cv2.getTrackbarPos("U-H", "Yellow Cone")
-                y_u_s = cv2.getTrackbarPos("U-S", "Yellow Cone")
-                y_u_v = cv2.getTrackbarPos("U-V", "Yellow Cone")
+                # y_l_h = cv2.getTrackbarPos("L-H", "Yellow Cone")
+                # y_l_s = cv2.getTrackbarPos("L-S", "Yellow Cone")
+                # y_l_v = cv2.getTrackbarPos("L-V", "Yellow Cone")
+                # y_u_h = cv2.getTrackbarPos("U-H", "Yellow Cone")
+                # y_u_s = cv2.getTrackbarPos("U-S", "Yellow Cone")
+                # y_u_v = cv2.getTrackbarPos("U-V", "Yellow Cone")
 
-                r_l_h = cv2.getTrackbarPos("L-H", "Red Cone")
-                r_l_s = cv2.getTrackbarPos("L-S", "Red Cone")
-                r_l_v = cv2.getTrackbarPos("L-V", "Red Cone")
-                r_u_h = cv2.getTrackbarPos("U-H", "Red Cone")
-                r_u_s = cv2.getTrackbarPos("U-S", "Red Cone")
-                r_u_v = cv2.getTrackbarPos("U-V", "Red Cone")
+                # r_l_h = cv2.getTrackbarPos("L-H", "Red Cone")
+                # r_l_s = cv2.getTrackbarPos("L-S", "Red Cone")
+                # r_l_v = cv2.getTrackbarPos("L-V", "Red Cone")
+                # r_u_h = cv2.getTrackbarPos("U-H", "Red Cone")
+                # r_u_s = cv2.getTrackbarPos("U-S", "Red Cone")
+                # r_u_v = cv2.getTrackbarPos("U-V", "Red Cone")
+
+                y_l_h = 4
+                y_l_s = 187
+                y_l_v = 135
+                y_u_h = 78
+                y_u_s = 255
+                y_u_v = 255
+
+                r_l_h = 0
+                r_l_s = 197
+                r_l_v = 110
+                r_u_h = 180
+                r_u_s = 255
+                r_u_v = 255
 
                 #yellow hsv range
                 low_yellow = np.array([y_l_h, y_l_s, y_l_v])
@@ -134,15 +150,24 @@ try:
 
                 #detect for both cone
                 image_for_both = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                detected_both = image_for_both
+                # detected_both = image_for_both
                 # cv2.resize(image_for_both, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
                 advanced = image_for_both
+                image_board = image_for_both
                 # cv2.resize(image_for_both, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
 
+                #detect for both (depth yolo)
+                both_detections = yolo_fct.depth_cone_detect(depthimg_colormap, net, "Cone")
+
                 #detect for yellow cone
-                detected_both, detected_yellow, yolo_yellow_cones_center, yellow_detections = yolo_fct.cone_detect(detected_both, image, mask_yellow, net, (255,0,100), "Yellow Cone")
+                yellow_detections = yolo_fct.cone_detect(depthimg_colormap, mask_yellow, net, (255,0,100), "Yellow Cone")
+                # yellow_detections = yolo_fct.cone_detect(image, mask_yellow, net, (255,0,100), "Yellow Cone")
+                # detected_both, detected_yellow, yolo_yellow_cones_center, yellow_detections = yolo_fct.cone_detect(detected_both, image, mask_yellow, net, (255,0,100), "Yellow Cone")
+                
                 #detect for red cone
-                detected_both, detected_red, yolo_red_cones_center, red_detections = yolo_fct.cone_detect(detected_both, image, mask_red, net, (120,100,255), "Red Cone")
+                red_detections = yolo_fct.cone_detect(depthimg_colormap, mask_red, net, (120,100,255), "Red Cone")
+                # red_detections = yolo_fct.cone_detect(image, mask_red, net, (120,100,255), "Red Cone")
+                # detected_both, detected_red, yolo_red_cones_center, red_detections = yolo_fct.cone_detect(detected_both, image, mask_red, net, (120,100,255), "Red Cone")
 
                 #get depth data from depthmap
                 advanced, center_with_depth_yellow = acc.getDepth_dcm(yellow_detections, depth_frame, depthimg, advanced, colors)
@@ -152,21 +177,36 @@ try:
                 # detected_both, detected_yellow, yolo_slopes_yellow = yolo_fct.cone_connect(detected_yellow, detected_both, yolo_yellow_cones_center)
                 # detected_both, detected_red, yolo_slopes_red = yolo_fct.cone_connect(detected_red, detected_both, yolo_red_cones_center)
                 #connect on the advanced img (with depth)
+                # wakakakaka bOBOBOBOBObobobobobbobboolubbaouforever la bobobobooooobobobobobobobob
                 advanced, yellow_cone_connect_sequence, yolo_slopes_yellow = acc.cone_connect_with_depth(advanced, center_with_depth_yellow, 0)
                 advanced, red_cone_connect_sequence, yolo_slopes_red = acc.cone_connect_with_depth(advanced, center_with_depth_red, 1)
-                print("slope yellow: ", yolo_slopes_yellow)
-                print("slope red: ", yolo_slopes_red)
+                # print("slope yellow: ", yolo_slopes_yellow)
+                # print("slope red: ", yolo_slopes_red)
                 print("real coor yellow: ", yellow_cone_connect_sequence)
                 print("real coor red: ", red_cone_connect_sequence)
-                
 
                 #fuzzy logic
-                directions = acc.get_directions_array(yolo_slopes_yellow, yolo_slopes_red)
+                # directions = acc.get_directions_array(yolo_slopes_yellow, yolo_slopes_red)
+                # print("directions: ", directions)
+
+                #detect direction
+                directions = acc.simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_sequence)
                 print("directions: ", directions)
 
                 #detect apex
-                apex_coor = acc.apex_detect(advanced, yellow_cone_connect_sequence, red_cone_connect_sequence, yolo_slopes_yellow, yolo_slopes_red, directions)
+                # apex_coor = acc.apex_detect(advanced, yellow_cone_connect_sequence, red_cone_connect_sequence, yolo_slopes_yellow, yolo_slopes_red, directions)
+                apex_coor = acc.simple_apex_detect(advanced, yellow_cone_connect_sequence, red_cone_connect_sequence)
+                        
+
+                # count = 0
                 
+                # if count < 5:
+                #         apex_coor_array.append(apex_coor)
+                #         count = count + 1
+                
+                # if len(apex_coor_array) == 5:
+
+
                 #resize the result images
                 # detected_yellow = cv2.resize(detected_yellow, (w, h), interpolation=cv2.INTER_LINEAR)
                 # detected_red = cv2.resize(detected_red, (w, h), interpolation=cv2.INTER_LINEAR)

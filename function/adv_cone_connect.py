@@ -1,7 +1,7 @@
 import cv2
 import numpy as np 
 import fuzzy
-import coordinates
+# import coordinates
 import math
 import sys
 # sys.path.append("/home/fyp/darknet")
@@ -26,6 +26,11 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         y = int(round(y))
         w = int(round(w))
         h = int(round(h))
+
+        cx = x
+        # int(x+w/2)
+        cy = y
+        # int(y+h/2)
         # print("For dected {label} with confidence {confidence} , Depth at x={x} , y={y} is {depthimg[y][x]}".format(label=label, confidence=float(confidence),x=x, y=y, depthimg=depthimg))
         '''
         print("For detected ", label, "with confidence ", confidence, ", Depth at x= ", x , ", y= is", depthimg[int(y)][int(x)])
@@ -38,12 +43,12 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         dm_d10 = np.round(depth_median/10,2)
         
         #cv2.putText(img,f'{depthimg[y][x]/10}cm', (x+round(w/2),y+round(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[label], 1)
-        cv2.putText(img,"{} cm".format(dm_d10), (x,y), cv2.FONT_HERSHEY_SIMPLEX, 0.2, (255,200,200), 1)
+        cv2.putText(img,"{} cm".format(dm_d10), (cx,cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,200,200), 1)
         '''
         print("The distance of the cone is ", dm_d10, "cm")
         '''
         # cv2.circle(img, (x,y), radius=1, color=(255,0,100), thickness=-1)
-        cv2.drawMarker(img, (x, y), (255,200,200), cv2.MARKER_CROSS, 10,1,1 )
+        cv2.drawMarker(img, (cx, cy), (255,200,200), cv2.MARKER_CROSS, 10,1,1 )
 
         # #cone localize
         xmin, ymin, xmax, ymax = bbox2points_(bbox)
@@ -65,10 +70,12 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         if xmin <0 or ymin<0:
             xmin = 0
             ymin = 0
-        coor = coordinates.get_real_world_coordinates(depth_frame, xmin + min[2], ymin + min[1]) 
-        # coor = 0
+        # coor = coordinates.get_real_world_coordinates(depth_frame, xmin + min[2], ymin + min[1]) 
+        coor = [1.4, 0.21, 5.2]
+        
         # coor = coordinates.get_real_world_coordinates(depth_frame, x, y) 
         center_with_depth.append([[x,y], dm_d10, coor])
+        # center_with_depth.append([[cx,cy], dm_d10, coor])
 
     center_with_depth = sorted(center_with_depth, key=lambda k:[k[1], k[0][0]], reverse=False)
     # print("center with depth", center_with_depth)
@@ -262,54 +269,6 @@ def real_direction_detect(yolo_slopes_yellow, yolo_slopes_red):
   
   return direction
 
-def get_differences_3d_xcoor(cone_connect_sequence):
-  x_coor_diff_array = []
-  if len(cone_connect_sequence) == 3:
-    for i in range(3):
-      if i != 2:
-        x_coor_diff_1 = cone_connect_sequence[i][2][0] - cone_connect_sequence[i+1]
-        x_coor_diff_array.append(x_coor_diff_1)
-
-  return x_coor_diff_array
-
-def dev_direction_detect(yellow_cone_connect_sequence, red_cone_connect_sequence):
-  #based on 3D x-coordinates
-  if len(yellow_cone_connect_sequence) == 3 and (red_cone_connect_sequence) == 3:
-    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
-    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
-
-  
-    direction = [0,0] # -2 = very left; -1 = left; 0 = straight; 1 = right; 2 = very right
-    directions = [] #directions array
-    #thresholds
-    thre_straight = [0.1, 0.3]
-    thre_left = [0.3, 0.]
-
-    for i in range(2):
-      if yellow_x_coor_diff_array[i] > 0:
-        if red_x_coor_diff_array[i] > 0:
-          if 2 >= yellow_x_coor_diff_array[i] >= 0.2 or 2 >= red_x_coor_diff_array[i] >= 0.2:
-            direction = [-1,-1]
-
-      elif yellow_x_coor_diff_array[0] < 0 and yellow_x_coor_diff_array[1] < 0:
-        if red_x_coor_diff_array[0] < 0 and red_x_coor_diff_array[1] < 0:
-          if -2 <= yellow_x_coor_diff_array[0] <= -0.2 or -2 <= red_x_coor_diff_array <= -0.2:
-            direction = [1,1]
-
-
-  '''
-  if len(yellow_cone_connect_sequence) == 3 and len(yellow_cone_connect_sequence) == 3:
-    for i in range(3):
-      x_coor_y = yellow_cone_connect_sequence[i][2][0]
-      x_coor_r = red_cone_connect_sequence[i][2][0]
-      if -thre_straight[1] <= x_coor_y <= -thre_straight[0]:  
-        if thre_straight[0] <= x_coor_r <= thre_straight[1]:
-          direction = [0,0] #straight
-        if x_coor_y > 0.3:
-          direction = [0,1]
-  '''
-    
-
 def get_directions_array(yolo_slopes_yellow, yolo_slopes_red):
   directions = []
   if len(yolo_slopes_yellow) == 1 and len(yolo_slopes_red) == 1:
@@ -358,5 +317,74 @@ def apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_se
   
   return apex_coor
 
+def get_differences_3d_xcoor(cone_connect_sequence):
+  x_coor_diff_array = []
+  if len(cone_connect_sequence) == 3:
+    for i in range(3):
+      if i != 2:
+        x_coor_diff_1 = cone_connect_sequence[i][2][0] - cone_connect_sequence[i+1][2][0]
+        x_coor_diff_array.append(x_coor_diff_1)
 
+  return x_coor_diff_array
 
+def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_sequence):
+  #based on 3D x-coordinates
+  direction = [0,0] #-1 = left; 0 = straight; 1 = right
+  directions = [] #directions array
+  thres_direction = 0.3
+  if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
+    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+
+    for i in range(2):
+      if yellow_x_coor_diff_array[i] > thres_direction:
+        direction[0] = -1
+      if red_x_coor_diff_array[i] > thres_direction:
+        direction[1] = -1
+      if yellow_x_coor_diff_array[i] < -thres_direction:
+        direction[0] = 1
+      if red_x_coor_diff_array[i] < -thres_direction:
+        direction[1] = 1
+      # if thres_direction > yellow_x_coor_diff_array[i] > 0:
+      #   direction[0] = 0
+      # if thres_direction > red_x_coor_diff_array[i] > 0:
+      #   direction[1] = 0
+      # if -thres_direction < yellow_x_coor_diff_array[i] < 0:
+      #   direction[0] = 0
+      # if -thres_direction < red_x_coor_diff_array[i] < 0:
+      #   direction[1] = 0
+
+      directions.append(direction)
+
+  return directions
+
+def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_sequence):
+  side = 0 # -1=left; 0=straight; 1=right
+  apex_coor = []
+  thres_apex = 0.2
+  
+  directions = simple_direction_detect(yellow_cone_connect_sequence,red_cone_connect_sequence)
+  if directions:
+    # if (directions[0].all() == -1) and (directions[1].all() == -1):
+    if directions[0][0] == -1 and directions[0][1] == -1 and directions[1][0] == -1 and directions[1][1] == -1:
+      side = -1 #left
+    # if (directions[0].all() == 1) and (directions[1].all() == 1):
+    if directions[0][0] == 1 and directions[0][1] == 1 and directions[1][0] == 1 and directions[1][1] == 1:
+      side = 1 #left
+  
+    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+    # print("yxcda: ", yellow_x_coor_diff_array)
+
+    if abs(yellow_x_coor_diff_array[0] - yellow_x_coor_diff_array[1]) >= thres_apex or abs(red_x_coor_diff_array[0] - red_x_coor_diff_array[1]) >= thres_apex:
+      if side == -1:
+        apex_coor.append(yellow_cone_connect_sequence[1])
+      if side == 1:
+        apex_coor.append(red_cone_connect_sequence[1])
+  
+  print("apex: ", apex_coor)
+  if apex_coor:
+    cv2.drawMarker(detected_both, (apex_coor[0][0], apex_coor[0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
+    cv2.putText(detected_both, "APEX", (apex_coor[0][0], apex_coor[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.2,(255,100,255), 1)
+
+  return apex_coor, side
