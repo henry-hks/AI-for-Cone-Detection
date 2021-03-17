@@ -17,6 +17,8 @@ import adv_cone_connect as acc
 # import system_filter as sf 
 
 net, class_names, class_colors = dn.load_network("/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.cfg","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/cones.data","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.weights",batch_size=1)
+# net, class_names, class_colors = dn.load_network("/media/fyp/HenrySSD/Polyu_EIE/FYP/new_weight/yolov4-conesDCM.cfg","/media/fyp/HenrySSD/Polyu_EIE/FYP/new_weight/conesdcm.data","/media/fyp/HenrySSD/Polyu_EIE/FYP/new_weight/yolov4-conesDCM_best.weights")
+
 # class_names = ["Yellow_Cone","Red_Cone"]
 network_width = dn.network_width(net)
 network_height = dn.network_height(net)
@@ -91,13 +93,25 @@ try:
                 color_frame = aligned_frames.get_color_frame()
 
                 # Convert images to numpy arrays
-                depthimg = np.asanyarray(depth_frame.get_data())
-                depthimg_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depthimg, alpha=8), cv2.COLORMAP_JET)
                 image = np.asanyarray(color_frame.get_data())
+                depthimg = np.asanyarray(depth_frame.get_data())
+                depthimg_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depthimg, alpha=0.03), cv2.COLORMAP_JET)
+                cv2.imshow("depth color map", depthimg_colormap)
+
+                #get image and depthimg
+                time_for_cap = 0
+                k = cv2.waitKey(33)
+                if k == ord('c'): #press c to cap
+                        if time_for_cap == 1:
+                                time_for_cap = 0
+                                path_dir = "/home/new_cap_image/"
+                                cv2.imwrite(os.path.join(path_dir, "image.jpg"), image)
+                                cv2.imwrite(os.path.join(path_dir, "depth.png"), depthimg)
+                                cv2.imwrite(os.path.join(path_dir, "depthimg_colormap.png"), depthimg_colormap)
 
                 # depthimg = cv2.resize(depthimg_ori, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV)
 
                 h,w,_ = image.shape
                 reference_point = ([w/2,h/2])
@@ -149,18 +163,19 @@ try:
                 # cv2.imshow("mask red", mask_red)
 
                 #detect for both cone
-                image_for_both = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                # image_for_both = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image_for_both = image
                 # detected_both = image_for_both
                 # cv2.resize(image_for_both, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
-                advanced = image_for_both
-                image_board = image_for_both
+                advanced = image
+                image_board = image
                 # cv2.resize(image_for_both, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
 
                 #detect for both (depth yolo)
-                both_detections = yolo_fct.depth_cone_detect(depthimg_colormap, net, "Cone")
+                # both_detections = yolo_fct.depth_cone_detect(depthimg_colormap, net, "Cone")
 
                 #detect for yellow cone
-                yellow_detections = yolo_fct.cone_detect(depthimg_colormap, mask_yellow, net, (255,0,100), "Yellow Cone")
+                yellow_detections = yolo_fct.cone_detect(image_rgb, mask_yellow, net, (255,0,100), "Yellow Cone")
                 # yellow_detections = yolo_fct.cone_detect(image, mask_yellow, net, (255,0,100), "Yellow Cone")
                 # detected_both, detected_yellow, yolo_yellow_cones_center, yellow_detections = yolo_fct.cone_detect(detected_both, image, mask_yellow, net, (255,0,100), "Yellow Cone")
                 
@@ -222,6 +237,8 @@ try:
                 cv2.imshow("advanced", advanced)
 
                 
+
+
                 # Press esc or 'q' to close the image window
                 key = cv2.waitKey(1)
                 if key & 0xFF == ord('q') or key == 27:

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np 
 import fuzzy
-# import coordinates
+import coordinates
 import math
 import sys
 # sys.path.append("/home/fyp/darknet")
@@ -70,8 +70,8 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         if xmin <0 or ymin<0:
             xmin = 0
             ymin = 0
-        # coor = coordinates.get_real_world_coordinates(depth_frame, xmin + min[2], ymin + min[1]) 
-        coor = [1.4, 0.21, 5.2]
+        coor = coordinates.get_real_world_coordinates(depth_frame, xmin + min[2], ymin + min[1]) 
+        # coor = [1.4, 0.21, 5.2]
         
         # coor = coordinates.get_real_world_coordinates(depth_frame, x, y) 
         center_with_depth.append([[x,y], dm_d10, coor])
@@ -331,30 +331,31 @@ def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_seque
   #based on 3D x-coordinates
   direction = [0,0] #-1 = left; 0 = straight; 1 = right
   directions = [] #directions array
-  thres_direction = 0.3
+  thres_direction = 0.5
   if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
-    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
-    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+    # if yellow_cone_connect_sequence[i][2][0] != 0 and yellow_cone_connect_sequence[i][2][1] != 0 and yellow_cone_connect_sequence[i][2][2] != 0 or red_cone_connect_sequence[i][2][0] != 0 and red_cone_connect_sequence[i][2][1] != 0 and red_cone_connect_sequence[i][2][2] != 0:
+      yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+      red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+      for i in range(2):
+        if abs(sum(yellow_cone_connect_sequence[i][2])) != 0 or abs(sum(red_cone_connect_sequence[i][2])) != 0:
+          if yellow_x_coor_diff_array[i] > thres_direction:
+            direction[0] = -1
+          if red_x_coor_diff_array[i] > thres_direction:
+            direction[1] = -1
+          if yellow_x_coor_diff_array[i] < -thres_direction:
+            direction[0] = 1
+          if red_x_coor_diff_array[i] < -thres_direction:
+            direction[1] = 1
+          # if thres_direction > yellow_x_coor_diff_array[i] > 0:
+          #   direction[0] = 0
+          # if thres_direction > red_x_coor_diff_array[i] > 0:
+          #   direction[1] = 0
+          # if -thres_direction < yellow_x_coor_diff_array[i] < 0:
+          #   direction[0] = 0
+          # if -thres_direction < red_x_coor_diff_array[i] < 0:
+          #   direction[1] = 0
 
-    for i in range(2):
-      if yellow_x_coor_diff_array[i] > thres_direction:
-        direction[0] = -1
-      if red_x_coor_diff_array[i] > thres_direction:
-        direction[1] = -1
-      if yellow_x_coor_diff_array[i] < -thres_direction:
-        direction[0] = 1
-      if red_x_coor_diff_array[i] < -thres_direction:
-        direction[1] = 1
-      # if thres_direction > yellow_x_coor_diff_array[i] > 0:
-      #   direction[0] = 0
-      # if thres_direction > red_x_coor_diff_array[i] > 0:
-      #   direction[1] = 0
-      # if -thres_direction < yellow_x_coor_diff_array[i] < 0:
-      #   direction[0] = 0
-      # if -thres_direction < red_x_coor_diff_array[i] < 0:
-      #   direction[1] = 0
-
-      directions.append(direction)
+        directions.append(direction)
 
   return directions
 
@@ -383,8 +384,10 @@ def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_con
         apex_coor.append(red_cone_connect_sequence[1])
   
   print("apex: ", apex_coor)
+  
   if apex_coor:
-    cv2.drawMarker(detected_both, (apex_coor[0][0], apex_coor[0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
-    cv2.putText(detected_both, "APEX", (apex_coor[0][0], apex_coor[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.2,(255,100,255), 1)
+    # print("apex coor ", apex_coor[0][0][0])
+    cv2.drawMarker(detected_both, (apex_coor[0][0][0], apex_coor[0][0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
+    cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.2,(255,100,255), 1)
 
   return apex_coor, side
