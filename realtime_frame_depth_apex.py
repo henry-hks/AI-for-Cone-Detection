@@ -99,15 +99,15 @@ try:
                 cv2.imshow("depth color map", depthimg_colormap)
 
                 #get image and depthimg
-                time_for_cap = 0
-                k = cv2.waitKey(33)
-                if k == ord('c'): #press c to cap
-                        if time_for_cap == 1:
-                                time_for_cap = 0
-                                path_dir = "/home/new_cap_image/"
-                                cv2.imwrite(os.path.join(path_dir, "image.jpg"), image)
-                                cv2.imwrite(os.path.join(path_dir, "depth.png"), depthimg)
-                                cv2.imwrite(os.path.join(path_dir, "depthimg_colormap.png"), depthimg_colormap)
+                # time_for_cap = 0
+                # k = cv2.waitKey(33)
+                # if k == ord('g'): #press g to cap
+                #         if time_for_cap == 1:
+                #                 time_for_cap = 0
+                #                 path_dir = "/home/result_cap_image/"
+                #                 cv2.imwrite(os.path.join(path_dir, "image.jpg"), image)
+                #                 cv2.imwrite(os.path.join(path_dir, "depth.png"), depthimg)
+                #                 cv2.imwrite(os.path.join(path_dir, "depthimg_colormap.png"), depthimg_colormap)
 
                 # depthimg = cv2.resize(depthimg_ori, (network_width, network_height), interpolation=cv2.INTER_LINEAR)
                 image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -197,8 +197,8 @@ try:
                 advanced, red_cone_connect_sequence, yolo_slopes_red = acc.cone_connect_with_depth(advanced, center_with_depth_red, 1)
                 # print("slope yellow: ", yolo_slopes_yellow)
                 # print("slope red: ", yolo_slopes_red)
-                print("real coor yellow: ", yellow_cone_connect_sequence)
-                print("real coor red: ", red_cone_connect_sequence)
+                # print("real coor yellow: ", yellow_cone_connect_sequence)
+                # print("real coor red: ", red_cone_connect_sequence)
 
                 #fuzzy logic
                 # directions = acc.get_directions_array(yolo_slopes_yellow, yolo_slopes_red)
@@ -229,14 +229,25 @@ try:
                 # advanced = cv2.resize(advanced, (w, h), interpolation=cv2.INTER_LINEAR)
                 
                 
-                fps = 1 / (time.time() - start_time)
-                cv2.putText(advanced,"FPS: {}".format(fps), (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                fps = round(1 / (time.time() - start_time), 3)
+                # cv2.putText(advanced,"FPS: {}".format(fps), (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
                 start_time = time.time()
                 # cv2.imshow("img", image)
                 # cv2.imshow("overall detection ",detected_both)
                 cv2.imshow("advanced", advanced)
 
-                
+                #capture result
+                time_for_capture = 0
+                k = cv2.waitKey(33)
+                if k == ord('a'): #press a to cap
+                        time_for_capture = 1
+                        if time_for_capture == 1:
+                                time_for_capture = 0
+                                path_dir = "/home/fyp/result_cap_image/"
+                                cv2.imwrite(os.path.join(path_dir, "image.jpg"), advanced)
+                                cv2.imwrite(os.path.join(path_dir, "depthimg_colormap.png"), depthimg_colormap)
+                                cv2.imwrite(os.path.join(path_dir, "mask_yellow.jpg"), mask_yellow)
+                                cv2.imwrite(os.path.join(path_dir, "mask_red.jpg"), mask_yellow)
 
 
                 # Press esc or 'q' to close the image window

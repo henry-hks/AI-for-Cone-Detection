@@ -64,13 +64,15 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         for y_bbox in range(len(depth_bboxf)):
             for x_bbox in range(len(depth_bboxf[0])):
                 abs_diff = abs(depth_medianf - depth_bboxf[y_bbox][x_bbox])
-                # if abs_diff < min[0]:
-                #     min = [abs_diff, y_bbox, x_bbox]
+                if abs_diff < min[0]:
+                    min = [abs_diff, y_bbox, x_bbox]
 
         if xmin <0 or ymin<0:
             xmin = 0
             ymin = 0
-        coor = coordinates.get_real_world_coordinates(depth_frame, xmin + min[2], ymin + min[1]) 
+        coor = coordinates.get_real_world_coordinates(depth_frame, xmin + min[2], ymin + min[1])
+        # if sum(coor) == 0.0:
+        #   coor = []
         # coor = [1.4, 0.21, 5.2]
         
         # coor = coordinates.get_real_world_coordinates(depth_frame, x, y) 
@@ -139,15 +141,16 @@ def real_cal_slopes(cone_connect_sequence):
 
 def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_id: 0 for yellow, 1 for red
   cone_connect_sequence = []
-  direction = 0
+  depth_diff_thres = 10
+
   if len(center_with_depth) >= 3:
     depth_difference_1 = center_with_depth[1][1] - center_with_depth[0][1] 
     depth_difference_2 = center_with_depth[2][1] - center_with_depth[1][1]
     print("depth diferences: ", depth_difference_1, depth_difference_2)
-    if depth_difference_1 > 0.01 and depth_difference_2 > 0.01: #if cones are separated obviously
+    if depth_difference_1 > depth_diff_thres and depth_difference_2 > depth_diff_thres: #if cones are separated obviously
       cone_connect_sequence=[center_with_depth[0], center_with_depth[1], center_with_depth[2]]
       
-    elif depth_difference_1 < 0.01 and depth_difference_2 > 0.01: #first two cones are horizontally aligned
+    elif depth_difference_1 < depth_diff_thres and depth_difference_2 > depth_diff_thres: #first two cones are horizontally aligned
       if center_with_depth[0][0][0] <= center_with_depth[2][0][0] <= center_with_depth[1][0][0] or center_with_depth[0][0][0] >= center_with_depth[2][0][0] >= center_with_depth[1][0][0]: 
         #if the further cone is horizontally between two near aligned cone pair
         if color_id == 0: # connect for yellow, probably sharp turn left
@@ -164,7 +167,7 @@ def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_
         #connect for both, probably 90 degree turn left
         cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
     
-    elif depth_difference_2 < 0.01 and depth_difference_1 > 0.01: #last two cones are horizontally aligned
+    elif depth_difference_2 < depth_diff_thres and depth_difference_1 > depth_diff_thres: #last two cones are horizontally aligned
       if center_with_depth[2][0][0] <= center_with_depth[0][0][0] <= center_with_depth[1][0][0] or center_with_depth[2][0][0] >= center_with_depth[0][0][0] >= center_with_depth[1][0][0]: 
         #if the further cone is horizontally between two near aligned cone pair
         if color_id == 0: # connect for yellow, probably sharp turn left
@@ -181,7 +184,7 @@ def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_
         #connect for both, turn right
         cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
     
-    elif depth_difference_1 < 0.01 and depth_difference_2 < 0.01: #three cones are horizontally aligned
+    elif depth_difference_1 < depth_diff_thres and depth_difference_2 < depth_diff_thres: #three cones are horizontally aligned
       if center_with_depth[0][0][0] <= center_with_depth[1][0][0] <= center_with_depth[2][0][0]:
         if color_id == 0: #yellow
           cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
@@ -205,6 +208,16 @@ def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_
     yolo_slopes.append(real_cal_slopes(cone_connect_sequence))
 
   return detected_both, cone_connect_sequence, yolo_slopes
+
+# def cone_connect_by_depth(detected_both, center_with_depth, color_id):
+#   cone_connect_sequence = []
+#   if len(center_with_depth) >= 3:
+#     depth_difference_1 = center_with_depth[1][1] - center_with_depth[0][1] 
+#     depth_difference_2 = center_with_depth[2][1] - center_with_depth[1][1]
+#     print("depth diferences: ", depth_difference_1, depth_difference_2)
+#     if depth_difference_1 > 0.01 and depth_difference_2 > 0.01: #if cones are separated obviously
+      
+#       cone_connect_sequence=[center_with_depth[0], center_with_depth[1], center_with_depth[2]]
 
 def direction_detect(yolo_slopes_yellow, yolo_slopes_red):
   #based on 2D slopes
@@ -313,7 +326,7 @@ def apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_se
   print("apex: ", apex_coor)
   if apex_coor:
     cv2.drawMarker(detected_both, (apex_coor[0][0], apex_coor[0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1 )
-    cv2.putText(detected_both, "APEX", (apex_coor[0][0], apex_coor[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.2,(255,100,255), 1)
+    cv2.putText(detected_both, "APEX", (apex_coor[0][0], apex_coor[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8,(0,255,10), 1)
   
   return apex_coor
 
@@ -331,31 +344,35 @@ def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_seque
   #based on 3D x-coordinates
   direction = [0,0] #-1 = left; 0 = straight; 1 = right
   directions = [] #directions array
-  thres_direction = 0.5
+  thres_direction = 0.2
   if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
-    # if yellow_cone_connect_sequence[i][2][0] != 0 and yellow_cone_connect_sequence[i][2][1] != 0 and yellow_cone_connect_sequence[i][2][2] != 0 or red_cone_connect_sequence[i][2][0] != 0 and red_cone_connect_sequence[i][2][1] != 0 and red_cone_connect_sequence[i][2][2] != 0:
-      yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
-      red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
-      for i in range(2):
-        if abs(sum(yellow_cone_connect_sequence[i][2])) != 0 or abs(sum(red_cone_connect_sequence[i][2])) != 0:
-          if yellow_x_coor_diff_array[i] > thres_direction:
-            direction[0] = -1
-          if red_x_coor_diff_array[i] > thres_direction:
-            direction[1] = -1
-          if yellow_x_coor_diff_array[i] < -thres_direction:
-            direction[0] = 1
-          if red_x_coor_diff_array[i] < -thres_direction:
-            direction[1] = 1
-          # if thres_direction > yellow_x_coor_diff_array[i] > 0:
-          #   direction[0] = 0
-          # if thres_direction > red_x_coor_diff_array[i] > 0:
-          #   direction[1] = 0
-          # if -thres_direction < yellow_x_coor_diff_array[i] < 0:
-          #   direction[0] = 0
-          # if -thres_direction < red_x_coor_diff_array[i] < 0:
-          #   direction[1] = 0
+    print("real coor yellow: ", yellow_cone_connect_sequence)
+    print("real coor red: ", red_cone_connect_sequence)
+    # if yellow_cone_connect_sequence[0][2][2] != 0.0 and yellow_cone_connect_sequence[1][2][2] != 0.0 and yellow_cone_connect_sequence[2][2][2] != 0.0 and red_cone_connect_sequence[0][2][2] != 0.0 and red_cone_connect_sequence[1][2][2] != 0.0 and red_cone_connect_sequence[2][2][2] != 0.0:
+    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+    print("yellow x coor difference: ", yellow_x_coor_diff_array)
+    print("red x coor difference: ", red_x_coor_diff_array)
 
-        directions.append(direction)
+    for i in range(2):
+      if yellow_x_coor_diff_array[i] > thres_direction:
+        direction[0] = -1
+      if red_x_coor_diff_array[i] > thres_direction:
+        direction[1] = -1
+      if yellow_x_coor_diff_array[i] < -thres_direction:
+        direction[0] = 1
+      if red_x_coor_diff_array[i] < -thres_direction:
+        direction[1] = 1
+      # if thres_direction > yellow_x_coor_diff_array[i] > 0:
+      #   direction[0] = 0
+      # if thres_direction > red_x_coor_diff_array[i] > 0:
+      #   direction[1] = 0
+      # if -thres_direction < yellow_x_coor_diff_array[i] < 0:
+      #   direction[0] = 0
+      # if -thres_direction < red_x_coor_diff_array[i] < 0:
+      #   direction[1] = 0
+
+      directions.append(direction)
 
   return directions
 
@@ -369,10 +386,15 @@ def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_con
     # if (directions[0].all() == -1) and (directions[1].all() == -1):
     if directions[0][0] == -1 and directions[0][1] == -1 and directions[1][0] == -1 and directions[1][1] == -1:
       side = -1 #left
+      cv2.putText(detected_both, "left", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
     # if (directions[0].all() == 1) and (directions[1].all() == 1):
     if directions[0][0] == 1 and directions[0][1] == 1 and directions[1][0] == 1 and directions[1][1] == 1:
-      side = 1 #left
-  
+      side = 1 #right
+      cv2.putText(detected_both, "right", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+    if directions[0][0] == 0 and directions[0][1] == 0 and directions[1][0] == 0 and directions[1][1] == 0:
+      side = 0 #straight
+      cv2.putText(detected_both, "straight", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+
     yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
     red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
     # print("yxcda: ", yellow_x_coor_diff_array)
@@ -388,6 +410,6 @@ def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_con
   if apex_coor:
     # print("apex coor ", apex_coor[0][0][0])
     cv2.drawMarker(detected_both, (apex_coor[0][0][0], apex_coor[0][0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
-    cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.2,(255,100,255), 1)
+    cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
 
   return apex_coor, side
