@@ -14,6 +14,7 @@ import darknet_images as dni
 sys.path.append("/home/fyp/function")
 import hsv_fct, yolo_fct
 import adv_cone_connect as acc 
+import motion_control as mc 
 # import system_filter as sf 
 
 net, class_names, class_colors = dn.load_network("/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.cfg","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/cones.data","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.weights",batch_size=1)
@@ -24,7 +25,7 @@ network_width = dn.network_width(net)
 network_height = dn.network_height(net)
 yolo_rp = ([network_width/2, network_height/2])
 
-
+counter = 0
 # def nothing(x):
 #     pass
 
@@ -200,26 +201,54 @@ try:
                 # print("real coor yellow: ", yellow_cone_connect_sequence)
                 # print("real coor red: ", red_cone_connect_sequence)
 
-                #fuzzy logic
-                # directions = acc.get_directions_array(yolo_slopes_yellow, yolo_slopes_red)
-                # print("directions: ", directions)
-
                 #detect direction
                 directions = acc.simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_sequence)
-                print("directions: ", directions)
+                # print("directions: ", directions)
 
                 #detect apex
                 # apex_coor = acc.apex_detect(advanced, yellow_cone_connect_sequence, red_cone_connect_sequence, yolo_slopes_yellow, yolo_slopes_red, directions)
                 apex_coor = acc.simple_apex_detect(advanced, yellow_cone_connect_sequence, red_cone_connect_sequence)
-                        
+                
+                # apex_coor_array.append(apex_coor)
+                
+                # if count > 4:
+                #         if len(apex_coor_array) >= 2:
+                #                 apex_coor_sure = apex_coor_array[len(apex_coor_array)-1][0]
+                #                 apex_coor_array = []
+                
+                # if apex_coor_sure:
+                # # print("apex coor ", apex_coor[0][0][0])
+                # cv2.drawMarker(detected_both, (apex_coor[0][0][0], apex_coor[0][0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
+                # cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
+                height, width, _ = advanced.shape
+                #main control algorithm
+                if not yellow_detections or not red_detections: #no cones detected
+                        print("Action: STOP")
+                elif yellow_cone_connect_sequence:
+                        if yellow_cone_connect_sequence[0][1] <= 60 and yellow_cone_connect_sequence[0][2][0] >= -0.02: #car crashing into the yellow cone
+                                print("Turn Right Now!")
 
-                # count = 0
+                elif red_cone_connect_sequence:
+                        if red_cone_connect_sequence[0][1] <= 60 and red_cone_connect_sequence[0][2][0] <= 0.02: #car crashing into the red cone
+                                print("Turn Left Now!")
+                                
+                if apex_coor: #if apex detected
+                        servo_adjust = mc.steering_control(apex_coor)
+                        if servo_adjust > 0: # turn left
+                                print("Turn Left")
+                                cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]+20, apex_coor[0][0][1]), (10,255,10), 2)
+                        if servo_adjust < 0: # turn right
+                                print("Turn Right")
+                                cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]-20, apex_coor[0][0][1]), (10,255,10), 2)
+
+                        print("servo_adjust: ", servo_adjust)
                 
-                # if count < 5:
-                #         apex_coor_array.append(apex_coor)
-                #         count = count + 1
-                
-                # if len(apex_coor_array) == 5:
+                else:
+                        cv2.arrowedLine(advanced, (int(width/2), height-20), (int(width/2), int(height/2)), (10,255,10), 2)
+                        print("Move Straight!")
+
+                # else:
+                #         if 
 
 
                 #resize the result images

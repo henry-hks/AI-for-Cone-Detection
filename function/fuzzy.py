@@ -28,7 +28,7 @@ def rmf(measurement, top, bottom):
     
     return fx
 
-def lmf(measurement, top, bottom):
+def lmf(measurement, bottom, top):
     #Special Trapezodial Function /-
     #Bottom < Top (X coordinate)
     fx = 0
@@ -42,7 +42,7 @@ def lmf(measurement, top, bottom):
     return fx
 
 def trapmf(measurement, start, top1, top2, end):
-    #Trapezodial function
+    #Trapezodial function /-\
     #Start < top1 < top2 < End (X coordinate)
     fx = 0
     if measurement < start or measurement > end:

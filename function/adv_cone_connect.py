@@ -146,7 +146,7 @@ def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_
   if len(center_with_depth) >= 3:
     depth_difference_1 = center_with_depth[1][1] - center_with_depth[0][1] 
     depth_difference_2 = center_with_depth[2][1] - center_with_depth[1][1]
-    print("depth diferences: ", depth_difference_1, depth_difference_2)
+    # print("depth diferences: ", depth_difference_1, depth_difference_2)
     if depth_difference_1 > depth_diff_thres and depth_difference_2 > depth_diff_thres: #if cones are separated obviously
       cone_connect_sequence=[center_with_depth[0], center_with_depth[1], center_with_depth[2]]
       
@@ -346,31 +346,49 @@ def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_seque
   directions = [] #directions array
   thres_direction = 0.2
   if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
-    print("real coor yellow: ", yellow_cone_connect_sequence)
-    print("real coor red: ", red_cone_connect_sequence)
+    # print("real coor yellow: ", yellow_cone_connect_sequence)
+    # print("real coor red: ", red_cone_connect_sequence)
     # if yellow_cone_connect_sequence[0][2][2] != 0.0 and yellow_cone_connect_sequence[1][2][2] != 0.0 and yellow_cone_connect_sequence[2][2][2] != 0.0 and red_cone_connect_sequence[0][2][2] != 0.0 and red_cone_connect_sequence[1][2][2] != 0.0 and red_cone_connect_sequence[2][2][2] != 0.0:
     yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
     red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
-    print("yellow x coor difference: ", yellow_x_coor_diff_array)
-    print("red x coor difference: ", red_x_coor_diff_array)
+    # print("yellow x coor difference: ", yellow_x_coor_diff_array)
+    # print("red x coor difference: ", red_x_coor_diff_array)
 
     for i in range(2):
       if yellow_x_coor_diff_array[i] > thres_direction:
         direction[0] = -1
+      if yellow_x_coor_diff_array[i] < -thres_direction:
+        direction[0] = 1
       if red_x_coor_diff_array[i] > thres_direction:
+        direction[1] = -1
+      if red_x_coor_diff_array[i] < -thres_direction:
+        direction[1] = 1
+    
+      directions.append(direction)
+  
+  if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) != 3:
+    print("only yellow side with 3 cones detected!")
+    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+    for i in range(2):
+      if yellow_x_coor_diff_array[i] > thres_direction:
+        direction[0] = -1
         direction[1] = -1
       if yellow_x_coor_diff_array[i] < -thres_direction:
         direction[0] = 1
+        direction[1] = 1
+
+      directions.append(direction)
+
+  if len(yellow_cone_connect_sequence) != 3 and len(red_cone_connect_sequence) == 3:
+    print("only red side with 3 cones detected!")
+    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+    for i in range(2):
+      if red_x_coor_diff_array[i] > thres_direction:
+        direction[1] = -1
+        direction[0] = -1
       if red_x_coor_diff_array[i] < -thres_direction:
         direction[1] = 1
-      # if thres_direction > yellow_x_coor_diff_array[i] > 0:
-      #   direction[0] = 0
-      # if thres_direction > red_x_coor_diff_array[i] > 0:
-      #   direction[1] = 0
-      # if -thres_direction < yellow_x_coor_diff_array[i] < 0:
-      #   direction[0] = 0
-      # if -thres_direction < red_x_coor_diff_array[i] < 0:
-      #   direction[1] = 0
+        direction[0] = 1
 
       directions.append(direction)
 
@@ -379,37 +397,66 @@ def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_seque
 def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_sequence):
   side = 0 # -1=left; 0=straight; 1=right
   apex_coor = []
+  virtual_apex_coor = []
+  tight_turn = 0
   thres_apex = 0.2
   
   directions = simple_direction_detect(yellow_cone_connect_sequence,red_cone_connect_sequence)
   if directions:
     # if (directions[0].all() == -1) and (directions[1].all() == -1):
-    if directions[0][0] == -1 and directions[0][1] == -1 and directions[1][0] == -1 and directions[1][1] == -1:
+    if (directions[0][0] == -1 and directions[0][1] == -1) or (directions[1][0] == -1 and directions[1][1] == -1):
       side = -1 #left
       cv2.putText(detected_both, "left", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
     # if (directions[0].all() == 1) and (directions[1].all() == 1):
-    if directions[0][0] == 1 and directions[0][1] == 1 and directions[1][0] == 1 and directions[1][1] == 1:
+    if (directions[0][0] == 1 and directions[0][1] == 1) or (directions[1][0] == 1 and directions[1][1] == 1):
       side = 1 #right
       cv2.putText(detected_both, "right", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
     if directions[0][0] == 0 and directions[0][1] == 0 and directions[1][0] == 0 and directions[1][1] == 0:
       side = 0 #straight
       cv2.putText(detected_both, "straight", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
 
-    yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
-    red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
-    # print("yxcda: ", yellow_x_coor_diff_array)
+    if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
+      yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
+      red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
+      # print("yxcda: ", yellow_x_coor_diff_array)
 
-    if abs(yellow_x_coor_diff_array[0] - yellow_x_coor_diff_array[1]) >= thres_apex or abs(red_x_coor_diff_array[0] - red_x_coor_diff_array[1]) >= thres_apex:
-      if side == -1:
-        apex_coor.append(yellow_cone_connect_sequence[1])
-      if side == 1:
-        apex_coor.append(red_cone_connect_sequence[1])
+      if abs(yellow_x_coor_diff_array[0] - yellow_x_coor_diff_array[1]) >= thres_apex or abs(red_x_coor_diff_array[0] - red_x_coor_diff_array[1]) >= thres_apex:
+        if side == -1: #left
+          apex_coor.append(yellow_cone_connect_sequence[1])
+        if side == 1: #right
+          apex_coor.append(red_cone_connect_sequence[1])
+
+    if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) != 3:
+      if red_cone_connect_sequence:
+        if side == 1: #right
+          apex_coor.append(red_cone_connect_sequence[len(red_cone_connect_sequence)-1])
+      else:
+        if side == 1: #right
+          tight_turn = 1 #tight turn right
+          virtual_apex_coor.append([250, 170])
+    
+    if len(yellow_cone_connect_sequence) != 3 and len(red_cone_connect_sequence) == 3:
+      if yellow_cone_connect_sequence:
+        if side == -1: #left
+          apex_coor.append(yellow_cone_connect_sequence[len(yellow_cone_connect_sequence)-1])
+      else:
+        if side == -1: #left
+          tight_turn = -1 #tight turn left
+          virtual_apex_coor.append([150, 170])
   
-  print("apex: ", apex_coor)
+  # print("apex: ", apex_coor)
   
-  if apex_coor:
+  if apex_coor and tight_turn == 0:
     # print("apex coor ", apex_coor[0][0][0])
     cv2.drawMarker(detected_both, (apex_coor[0][0][0], apex_coor[0][0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
     cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
+  if tight_turn == 1:
+    print("Tight Turn Right")
+    cv2.putText(detected_both, "Tight Turn Right", (virtual_apex_coor[0][0], virtual_apex_coor[0][1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
+    # cv2.arrowedLine(detected_both, )
+  if tight_turn == -1:
+    print("Tight Turn Left")
+    cv2.putText(detected_both, "Tight Turn Left", (virtual_apex_coor[0][0], virtual_apex_coor[0][1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
+    # cv2.arrowedLine(detected_both, )
 
-  return apex_coor, side
+  return apex_coor
