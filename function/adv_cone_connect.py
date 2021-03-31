@@ -199,25 +199,15 @@ def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_
         elif color_id == 1: #red
           cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
   
-  yolo_slopes=[]
+  # yolo_slopes=[]
   if cone_connect_sequence:
     #draw lines
     drawline_sequence(detected_both, cone_connect_sequence)
     #calculate slopes
     # yolo_slopes.append(cal_slopes(cone_connect_sequence))
-    yolo_slopes.append(real_cal_slopes(cone_connect_sequence))
+    # yolo_slopes.append(real_cal_slopes(cone_connect_sequence))
 
-  return detected_both, cone_connect_sequence, yolo_slopes
-
-# def cone_connect_by_depth(detected_both, center_with_depth, color_id):
-#   cone_connect_sequence = []
-#   if len(center_with_depth) >= 3:
-#     depth_difference_1 = center_with_depth[1][1] - center_with_depth[0][1] 
-#     depth_difference_2 = center_with_depth[2][1] - center_with_depth[1][1]
-#     print("depth diferences: ", depth_difference_1, depth_difference_2)
-#     if depth_difference_1 > 0.01 and depth_difference_2 > 0.01: #if cones are separated obviously
-      
-#       cone_connect_sequence=[center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+  return detected_both, cone_connect_sequence
 
 def direction_detect(yolo_slopes_yellow, yolo_slopes_red):
   #based on 2D slopes

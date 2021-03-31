@@ -7,6 +7,7 @@ import numpy as np
 import pyrealsense2 as rs
 import sys
 import time
+import serial
 sys.path.append("/home/fyp/darknet")
 import darknet as dn 
 import darknet_images as dni 
@@ -17,6 +18,7 @@ import adv_cone_connect as acc
 import motion_control as mc 
 # import system_filter as sf 
 
+#load yolov4 network
 net, class_names, class_colors = dn.load_network("/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.cfg","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/cones.data","/home/fyp/gazebo_ws/src/robot_vision/src/yolov4_cone/yolov4_cones.weights",batch_size=1)
 # net, class_names, class_colors = dn.load_network("/media/fyp/HenrySSD/Polyu_EIE/FYP/new_weight/yolov4-conesDCM.cfg","/media/fyp/HenrySSD/Polyu_EIE/FYP/new_weight/conesdcm.data","/media/fyp/HenrySSD/Polyu_EIE/FYP/new_weight/yolov4-conesDCM_best.weights")
 
@@ -25,7 +27,7 @@ network_width = dn.network_width(net)
 network_height = dn.network_height(net)
 yolo_rp = ([network_width/2, network_height/2])
 
-counter = 0
+#Trackbar configuration
 # def nothing(x):
 #     pass
 
@@ -55,7 +57,7 @@ counter = 0
 # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 # hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
-#get image from realsense
+#realsense configuration
 device_id = '036522072893'
 pipeline = rs.pipeline()
 config = rs.config()
@@ -72,6 +74,12 @@ align_to = rs.stream.color
 align = rs.align(align_to)
 #color for drawing boundary box
 #colors = darknet.class_colors(ClassNameMain)
+
+#serial output
+COM_PORT = '/dev/ttyTHS1'
+BAUD_RATES = 115200
+ser = serial.Serial(COM_PORT, BAUD_RATES)
+
 apex_coor_array = []
 
 try:
@@ -133,15 +141,31 @@ try:
                 # r_u_s = cv2.getTrackbarPos("U-S", "Red Cone")
                 # r_u_v = cv2.getTrackbarPos("U-V", "Red Cone")
 
+                #configure for ihome
+                # y_l_h = 4
+                # y_l_s = 187
+                # y_l_v = 135
+                # y_u_h = 78
+                # y_u_s = 255
+                # y_u_v = 255
+
+                # r_l_h = 0
+                # r_l_s = 197
+                # r_l_v = 110
+                # r_u_h = 180
+                # r_u_s = 255
+                # r_u_v = 255
+
+                #config for w402c
                 y_l_h = 4
-                y_l_s = 187
+                y_l_s = 91
                 y_l_v = 135
                 y_u_h = 78
                 y_u_s = 255
                 y_u_v = 255
 
                 r_l_h = 0
-                r_l_s = 197
+                r_l_s = 91
                 r_l_v = 110
                 r_u_h = 180
                 r_u_s = 255
@@ -194,8 +218,8 @@ try:
                 # detected_both, detected_red, yolo_slopes_red = yolo_fct.cone_connect(detected_red, detected_both, yolo_red_cones_center)
                 #connect on the advanced img (with depth)
                 # wakakakaka bOBOBOBOBObobobobobbobboolubbaouforever la bobobobooooobobobobobobobob
-                advanced, yellow_cone_connect_sequence, yolo_slopes_yellow = acc.cone_connect_with_depth(advanced, center_with_depth_yellow, 0)
-                advanced, red_cone_connect_sequence, yolo_slopes_red = acc.cone_connect_with_depth(advanced, center_with_depth_red, 1)
+                advanced, yellow_cone_connect_sequence = acc.cone_connect_with_depth(advanced, center_with_depth_yellow, 0)
+                advanced, red_cone_connect_sequence = acc.cone_connect_with_depth(advanced, center_with_depth_red, 1)
                 # print("slope yellow: ", yolo_slopes_yellow)
                 # print("slope red: ", yolo_slopes_red)
                 # print("real coor yellow: ", yellow_cone_connect_sequence)
@@ -220,43 +244,64 @@ try:
                 # # print("apex coor ", apex_coor[0][0][0])
                 # cv2.drawMarker(detected_both, (apex_coor[0][0][0], apex_coor[0][0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
                 # cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
-                height, width, _ = advanced.shape
-                #main control algorithm
-                if not yellow_detections or not red_detections: #no cones detected
-                        print("Action: STOP")
-                elif yellow_cone_connect_sequence:
-                        if yellow_cone_connect_sequence[0][1] <= 60 and yellow_cone_connect_sequence[0][2][0] >= -0.02: #car crashing into the yellow cone
-                                print("Turn Right Now!")
-
-                elif red_cone_connect_sequence:
-                        if red_cone_connect_sequence[0][1] <= 60 and red_cone_connect_sequence[0][2][0] <= 0.02: #car crashing into the red cone
-                                print("Turn Left Now!")
-                                
-                if apex_coor: #if apex detected
-                        servo_adjust = mc.steering_control(apex_coor)
-                        if servo_adjust > 0: # turn left
-                                print("Turn Left")
-                                cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]+20, apex_coor[0][0][1]), (10,255,10), 2)
-                        if servo_adjust < 0: # turn right
-                                print("Turn Right")
-                                cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]-20, apex_coor[0][0][1]), (10,255,10), 2)
-
-                        print("servo_adjust: ", servo_adjust)
                 
+                height, width, _ = advanced.shape
+
+                #main control algorithm
+
+                go_to_second_layer = 0
+                #first layer (safety net)
+                if not yellow_detections or not red_detections: #no cones detected
+                        print("Action: STOP") #stop the car
+
+                elif yellow_cone_connect_sequence: #yellow cone detected
+                        if yellow_cone_connect_sequence[0][1] <= 60 and yellow_cone_connect_sequence[0][2][0] >= -0.02: #car crashing into the yellow cone
+                                print("Turn Right Now!") #turn right immediately
+                        go_to_second_layer = 1
+
+                elif red_cone_connect_sequence: #red cond detected
+                        if red_cone_connect_sequence[0][1] <= 60 and red_cone_connect_sequence[0][2][0] <= 0.02: #car crashing into the red cone
+                                print("Turn Left Now!") #turn left immediately
+                        go_to_second_layer = 1
+
                 else:
                         cv2.arrowedLine(advanced, (int(width/2), height-20), (int(width/2), int(height/2)), (10,255,10), 2)
                         print("Move Straight!")
 
-                # else:
-                #         if 
 
+                #second layer (speed enhance/ cutting corner)
+                if go_to_second_layer == 1:
+                        if apex_coor: #if apex detected
+                                servo_adjust = round(mc.steering_control(apex_coor), 3) #find the servo pitch to be adjust (min:-15; max:15)
+                                speed_adjust = round(mc.speed_control(apex_coor), 3) #find the speed needed
+                                if servo_adjust > 0: # turn left
+                                        print("Turn Left")
+                                        cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]+20, apex_coor[0][0][1]), (10,255,10), 2)
+                                if servo_adjust < 0: # turn right
+                                        print("Turn Right")
+                                        cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]-20, apex_coor[0][0][1]), (10,255,10), 2)
+
+                                print("servo_adjust: ", servo_adjust)
+                                print("speed needed: ", speed_adjust)
+                                cv2.putText(advanced, "servo adjust: {}".format(servo_adjust), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
+                                cv2.putText(advanced, "speed: {}".format(speed_adjust), (10, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
+                                #message format: [F/B] [PWM] [+/-] [servo_pitch]
+                                #seperate the sign from the servo pitch (+:1, -:0)
+                                servo_sign = np.sign(servo_adjust)
+                                if servo_sign == 1 or servo_sign == 0:
+                                        sign = 1
+                                elif servo_sign == -1:
+                                        sign == 0
+
+                                #send message 
+                                message = "F{}{}{}".format(speed_adjust, sign, abs(servo_adjust))
+                                ser.write(message.encode())
 
                 #resize the result images
                 # detected_yellow = cv2.resize(detected_yellow, (w, h), interpolation=cv2.INTER_LINEAR)
                 # detected_red = cv2.resize(detected_red, (w, h), interpolation=cv2.INTER_LINEAR)
                 # detected_both = cv2.resize(detected_both, (w, h), interpolation=cv2.INTER_LINEAR)
                 # advanced = cv2.resize(advanced, (w, h), interpolation=cv2.INTER_LINEAR)
-                
                 
                 fps = round(1 / (time.time() - start_time), 3)
                 # cv2.putText(advanced,"FPS: {}".format(fps), (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)

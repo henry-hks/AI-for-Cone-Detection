@@ -2,53 +2,8 @@ import cv2
 import numpy as np 
 import fuzzy
 
-# def motion_control(apex_coor, side):
-#   if apex_coor: #if have apex
-#     if apex_coor[2][0] 
-
-# def path_finding(yellow_cone_connect_sequence, red_cone_connect_sequence):
-#   #based on 3D x-coordinates
-#   if len(yellow_cone_connect_sequence) == 3 and (red_cone_connect_sequence) == 3:
-#     yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
-#     red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
-    
-#     diff_thres_1 = 0.2
-#     diff_thres_2 = 
-
-#     for i in range(2):
-#       if yellow_x_coor_diff_array[i] < 0:
-#         if red_x_coor_diff_array[i] > 0:
-#           if -0.2 < yellow_cone_connect_sequence[i]:
-            
-#           if 2 >= yellow_x_coor_diff_array[i] >= 0.2 or 2 >= red_x_coor_diff_array[i] >= 0.2:
-#             direction = [-1,-1]
-
-#       elif yellow_x_coor_diff_array[i] > 0:
-#         if red_x_coor_diff_array[i] > 0:
-#           if 2 >= yellow_x_coor_diff_array[i] >= 0.2 or 2 >= red_x_coor_diff_array[i] >= 0.2:
-#             direction = [-1,-1]
-
-def steering(yolo_slopes_yellow):
-  #fuzzy inferencing based on slopes
-  #yellow
-  slope1 = yolo_slopes_yellow[0]
-
-  #inferencing S & L
-  w1 = max(fuzzy.rmf(slope1 , -0.2, -0.45), fuzzy.trapmf(slope1, -0.45, -0.2, -0.05, -0.01))
-  #inferencing L & VL
-  w2 = max(fuzzy.trapmf(slope1, -0.45, -0.2, -0.05, -0.01), fuzzy.trimf(slope1, -0.05, -0.01, 0.01))
-  #inferencing VL & VR
-  w3 = max(fuzzy.trimf(slope1, -0.05, -0.01, 0.01), fuzzy.trimf(slope1, -0.01, 0.01, 0.05))
-  #inferencing VR & R
-  w4 = max(fuzzy.trimf(slope1, -0.01, 0.01, 0.05), fuzzy.trapmf(slope1, 0.01, 0.05))
-
-  i = max(w1,w2)
-  j = max(w3,w4)
-
-  return i, j
-
 def steering_control(apex_coor):
-  #fuzzy inferencing based on real x coordinates
+  #fuzzy steering inferencing based on real x coordinates
   
   #servo clockwise and counterclockwise ratio
   servo_adjust = 0
@@ -61,10 +16,11 @@ def steering_control(apex_coor):
   pitch_max = 15
 
   # 1. fuzzification
-  #     1. L : Left
-  #     2. VL: Right
-  #     3. R : Right
-  #     4. VR: Very Right
+  #     1. VL : Very Left
+  #     2. L  : Left
+  #     3. S  : Straight
+  #     4. R  : Right
+  #     5. VR : Very Right
 
   # 2. inferencing
 
@@ -87,12 +43,43 @@ def steering_control(apex_coor):
 
   return servo_adjust
     
-# def straight_control(cone_connect_sequence, color_id):
-#   #color_id: 0 for yellow; 1 for red
-#   if color_id == 0: #yellow cone
-#     if <= cone_connect_sequence[0][2][0] <=
+def speed_control(apex_coor):
+  #fuzzy speed inferencing based on distance of the apex
+  
+  #speed add or minus (PWM)
+  speed_adjust = 0
 
-# def tune_left(cone_connect_sequence, color_id):
-#   #color_id: 0 for yellow; 1 for red
-#   if color_id == 0: #yellow cone
-#     if cone_connect_sequence[0][2][0] >= 
+  #get the distance of the apex (cm)
+  apex_distance = apex_coor[0][1]
+
+  #motor PWM adjusting max & min (6V: 120cm/s)
+  pwm_min = 0
+  pwm_max = 100
+  
+  # 1. fuzzification
+  #     1. VC : Very Close
+  #     2. C  : Close
+  #     3. O  : Optimal
+  #     4. F  : Far
+  #     5. VF : Very Far
+
+  # 2. inferencing
+
+  #inferencing VC & C
+  w1 = max(fuzzy.rmf(apex_distance, 60, 100), fuzzy.trimf(apex_distance, 60, 100, 120))
+  # *think below 60cm case*
+  #inferencing C & O
+  w2 = max(fuzzy.trimf(apex_distance, 60, 100, 120), fuzzy.trimf(apex_distance, 100, 120, 140))
+
+  #inferencing O & F
+  w3 = max(fuzzy.trimf(apex_distance, 100, 120, 140), fuzzy.trimf(apex_distance, 120, 140, 180))
+  
+  #inferencing F & VF
+  w4 = max(fuzzy.trimf(apex_distance, 120, 140, 180), fuzzy.lmf(apex_distance, 140, 180))
+
+  i = max(w1, w2) #close or optimal
+  j = max(w3, w4) #optimal or far
+
+  speed_adjust = (i*pwm_min + j*pwm_max) #find the speed (pwm) for approaching the apex
+
+  return speed_adjust
