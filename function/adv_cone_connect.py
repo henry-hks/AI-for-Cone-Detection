@@ -79,7 +79,7 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         center_with_depth.append([[x,y], dm_d10, coor])
         # center_with_depth.append([[cx,cy], dm_d10, coor])
 
-    center_with_depth = sorted(center_with_depth, key=lambda k:[k[1], k[0][0]], reverse=False)
+    center_with_depth = sorted(center_with_depth, key=lambda k:[k[1], k[0][0]], reverse=False) #sort by depth and then 2D x coordinate ascendingly
     # print("center with depth", center_with_depth)
     return img, center_with_depth
 
@@ -142,70 +142,108 @@ def real_cal_slopes(cone_connect_sequence):
 def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_id: 0 for yellow, 1 for red
   cone_connect_sequence = []
   depth_diff_thres = 10
+  depth_diff_u_thres = 100
+
+  # if len(center_with_depth) == 2:
+  #   if center_with_depth[0][1] != 0 and center_with_depth[1][1] != 0:
+  #     depth_difference = center_with_depth[1][1] - center_with_depth[0][1] 
+  #     if depth_diff_u_thres > depth_difference > depth_diff_thres:
+  #       cone_connect_sequence=[center_with_depth[0], center_with_depth[1]]
 
   if len(center_with_depth) >= 3:
-    depth_difference_1 = center_with_depth[1][1] - center_with_depth[0][1] 
-    depth_difference_2 = center_with_depth[2][1] - center_with_depth[1][1]
-    # print("depth diferences: ", depth_difference_1, depth_difference_2)
-    if depth_difference_1 > depth_diff_thres and depth_difference_2 > depth_diff_thres: #if cones are separated obviously
-      cone_connect_sequence=[center_with_depth[0], center_with_depth[1], center_with_depth[2]]
-      
-    elif depth_difference_1 < depth_diff_thres and depth_difference_2 > depth_diff_thres: #first two cones are horizontally aligned
-      if center_with_depth[0][0][0] <= center_with_depth[2][0][0] <= center_with_depth[1][0][0] or center_with_depth[0][0][0] >= center_with_depth[2][0][0] >= center_with_depth[1][0][0]: 
-        #if the further cone is horizontally between two near aligned cone pair
-        if color_id == 0: # connect for yellow, probably sharp turn left
-          cone_connect_sequence = [center_with_depth[1], center_with_depth[2], center_with_depth[0]]
-          
-        elif color_id == 1: #connect for red, probably sharp turn right
-          cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
-          
-      elif center_with_depth[2][0][0] <= center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
-        #connect for both, probably 90 degree turn left
-        cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
-
-      elif center_with_depth[2][0][0] >= center_with_depth[1][0][0] >= center_with_depth[0][0][0]:
-        #connect for both, probably 90 degree turn left
-        cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
-    
-    elif depth_difference_2 < depth_diff_thres and depth_difference_1 > depth_diff_thres: #last two cones are horizontally aligned
-      if center_with_depth[2][0][0] <= center_with_depth[0][0][0] <= center_with_depth[1][0][0] or center_with_depth[2][0][0] >= center_with_depth[0][0][0] >= center_with_depth[1][0][0]: 
-        #if the further cone is horizontally between two near aligned cone pair
-        if color_id == 0: # connect for yellow, probably sharp turn left
-          cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
-          
-        elif color_id == 1: # connect for red, probably sharp turn left
-          cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
-          
-      elif center_with_depth[2][0][0] <= center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
-        #connect for both, turn left
-        cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+    if center_with_depth[0][1] != 0 and center_with_depth[1][1] != 0 and center_with_depth[2][1] != 0: #if no false depth
+      depth_difference_1 = center_with_depth[1][1] - center_with_depth[0][1] 
+      depth_difference_2 = center_with_depth[2][1] - center_with_depth[1][1]
+      # print("depth diferences: ", depth_difference_1, depth_difference_2)
+      if depth_diff_u_thres > depth_difference_1 > depth_diff_thres and depth_diff_u_thres > depth_difference_2 > depth_diff_thres: 
+        #if cones are separated obviously and within the range of threshold
+        cone_connect_sequence=[center_with_depth[0], center_with_depth[1], center_with_depth[2]]
         
-      elif center_with_depth[2][0][0] >= center_with_depth[1][0][0] >= center_with_depth[0][0][0]:
-        #connect for both, turn right
-        cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
-    
-    elif depth_difference_1 < depth_diff_thres and depth_difference_2 < depth_diff_thres: #three cones are horizontally aligned
-      if center_with_depth[0][0][0] <= center_with_depth[1][0][0] <= center_with_depth[2][0][0]:
-        if color_id == 0: #yellow
-          cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+      elif depth_difference_1 < depth_diff_thres and depth_diff_u_thres > depth_difference_2 > depth_diff_thres: #first two cones are horizontally aligned
+        if center_with_depth[0][0][0] <= center_with_depth[2][0][0] <= center_with_depth[1][0][0]: 
+          #if the further cone is horizontally between two near aligned cone pair
+          if color_id == 0: # connect for yellow, probably sharp turn left
+            cone_connect_sequence = [center_with_depth[1], center_with_depth[2], center_with_depth[0]]
+            
+          elif color_id == 1: #connect for red, probably sharp turn right
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
+        elif center_with_depth[0][0][0] >= center_with_depth[2][0][0] >= center_with_depth[1][0][0]:
+          #if the further cone is horizontally between two near aligned cone pair
+          if color_id == 0: # connect for yellow, probably sharp turn left
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
+            
+          elif color_id == 1: #connect for red, probably sharp turn right
+            cone_connect_sequence = [center_with_depth[1], center_with_depth[2], center_with_depth[0]]
+
+        elif center_with_depth[2][0][0] <= center_with_depth[1][0][0] and center_with_depth[2][0][0] <= center_with_depth[0][0][0]:
+          #connect for both, probably 90 degree turn left
+          if center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+          elif center_with_depth[1][0][0] >= center_with_depth[0][0][0]:
+            cone_connect_sequence = [center_with_depth[1], center_with_depth[0], center_with_depth[2]]
+
+        elif center_with_depth[2][0][0] >= center_with_depth[1][0][0] and center_with_depth[2][0][0] >= center_with_depth[0][0][0]:
+          #connect for both, probably 90 degree turn right
+          if center_with_depth[1][0][0] >= center_with_depth[0][0][0]:
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+          elif center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
+            cone_connect_sequence = [center_with_depth[1], center_with_depth[0], center_with_depth[2]]
+      
+      elif depth_difference_2 < depth_diff_thres and depth_diff_u_thres > depth_difference_1 > depth_diff_thres: #last two cones are horizontally aligned
+        if center_with_depth[2][0][0] <= center_with_depth[0][0][0] <= center_with_depth[1][0][0]: 
+          #if the further cone is horizontally between two near aligned cone pair
+          if color_id == 0: # connect for yellow, probably sharp turn left
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+            
+          elif color_id == 1: # connect for red, probably sharp turn left
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
+
+        elif center_with_depth[2][0][0] >= center_with_depth[0][0][0] >= center_with_depth[1][0][0]:
+          if color_id == 0: # connect for yellow, probably sharp turn left
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
+            
+          elif color_id == 1: # connect for red, probably sharp turn left
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+            
+        elif center_with_depth[2][0][0] <= center_with_depth[0][0][0] and center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
+          #connect for both, turn left
+          if center_with_depth[2][0][0] <= center_with_depth[1][0][0]:
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+          elif center_with_depth[2][0][0] >= center_with_depth[1][0][0]:
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
           
-        elif color_id == 1: #red
-          cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
-          
-      elif center_with_depth[2][0][0] <= center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
-        if color_id == 0: #yellow
-          cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
-          
-        elif color_id == 1: #red
-          cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
-  
+        elif center_with_depth[2][0][0] >= center_with_depth[0][0][0] and center_with_depth[1][0][0] >= center_with_depth[0][0][0]:
+          #connect for both, turn right
+          if center_with_depth[2][0][0] >= center_with_depth[1][0][0]:
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+          elif center_with_depth[2][0][0] <= center_with_depth[1][0][0]:
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
+      
+      elif depth_difference_1 < depth_diff_thres and depth_difference_2 < depth_diff_thres: #three cones are horizontally aligned
+        if center_with_depth[0][0][0] <= center_with_depth[1][0][0] <= center_with_depth[2][0][0]:
+          if color_id == 0: #yellow
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+            
+          elif color_id == 1: #red
+            cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
+            
+        elif center_with_depth[2][0][0] <= center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
+          if color_id == 0: #yellow
+            cone_connect_sequence = [center_with_depth[2], center_with_depth[1], center_with_depth[0]]
+            
+          elif color_id == 1: #red
+            cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
+
   # yolo_slopes=[]
-  if cone_connect_sequence:
+  if len(cone_connect_sequence) == 3:
     #draw lines
     drawline_sequence(detected_both, cone_connect_sequence)
     #calculate slopes
     # yolo_slopes.append(cal_slopes(cone_connect_sequence))
     # yolo_slopes.append(real_cal_slopes(cone_connect_sequence))
+  
+  # elif len(cone_connect_sequence) == 2:
+  #   cv2.line(detected_both, (cone_connect_sequence[0][0][0], cone_connect_sequence[0][0][1]) , (cone_connect_sequence[1][0][0], cone_connect_sequence[1][0][1]), (255,100,255), 2)
 
   return detected_both, cone_connect_sequence
 
@@ -449,4 +487,4 @@ def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_con
     cv2.putText(detected_both, "Tight Turn Left", (virtual_apex_coor[0][0], virtual_apex_coor[0][1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
     # cv2.arrowedLine(detected_both, )
 
-  return apex_coor
+  return apex_coor, side

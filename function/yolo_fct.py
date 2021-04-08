@@ -19,7 +19,7 @@ def cone_detect(image, mask, net, class_colors, name):
   new_image = cv2.bitwise_and(image_for,image_for, mask=mask)
   image_for, detections = dni.image_detection_(new_image, net, name, class_colors, 0.5)
   
-  return detections
+  return detections, new_image
 
 # def cone_detect(detected_both, image, mask, net, class_colors, name):
 #     name = [name]
