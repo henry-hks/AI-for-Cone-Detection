@@ -1,7 +1,7 @@
 import cv2
 import numpy as np 
 import fuzzy
-import coordinates
+# import coordinates
 import math
 import sys
 # sys.path.append("/home/fyp/darknet")
@@ -132,8 +132,8 @@ def real_cal_slopes(cone_connect_sequence):
       #get the slopes between yellow cones
       xdiff = (cone_connect_sequence[i][2][0]) - (cone_connect_sequence[i+1][2][0])
       ydiff = (cone_connect_sequence[i][2][2]) - (cone_connect_sequence[i+1][2][2])
-      if xdiff != 0:
-        sl = round(np.true_divide(ydiff, xdiff, out=None), 5)
+      if ydiff != 0:
+        sl = round(np.true_divide(xdiff, ydiff, out=None), 5)
       else:
         sl = 999
       yolo_slopes.append(sl)
@@ -370,9 +370,12 @@ def get_differences_3d_xcoor(cone_connect_sequence):
 
 def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_sequence):
   #based on 3D x-coordinates
+  #based on top view slopes x_diff/y_diff
   direction = [0,0] #-1 = left; 0 = straight; 1 = right
   directions = [] #directions array
   thres_direction = 0.2
+  yellow_slopes = real_cal_slopes(yellow_cone_connect_sequence)
+  red_slopes = real_cal_slopes(red_cone_connect_sequence)
   if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
     # print("real coor yellow: ", yellow_cone_connect_sequence)
     # print("real coor red: ", red_cone_connect_sequence)
@@ -422,27 +425,40 @@ def simple_direction_detect(yellow_cone_connect_sequence, red_cone_connect_seque
 
   return directions
 
-def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_sequence):
-  side = 0 # -1=left; 0=straight; 1=right
-  apex_coor = []
-  virtual_apex_coor = []
-  tight_turn = 0
-  thres_apex = 0.2
-  
+def simple_side_detect(yellow_cone_connect_sequence, red_cone_connect_sequence):
+  side = 999
   directions = simple_direction_detect(yellow_cone_connect_sequence,red_cone_connect_sequence)
   if directions:
     # if (directions[0].all() == -1) and (directions[1].all() == -1):
     if (directions[0][0] == -1 and directions[0][1] == -1) or (directions[1][0] == -1 and directions[1][1] == -1):
       side = -1 #left
-      cv2.putText(detected_both, "left", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+      # cv2.putText(detected_both, "left", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
     # if (directions[0].all() == 1) and (directions[1].all() == 1):
     if (directions[0][0] == 1 and directions[0][1] == 1) or (directions[1][0] == 1 and directions[1][1] == 1):
       side = 1 #right
-      cv2.putText(detected_both, "right", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+      # cv2.putText(detected_both, "right", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
     if directions[0][0] == 0 and directions[0][1] == 0 and directions[1][0] == 0 and directions[1][1] == 0:
       side = 0 #straight
-      cv2.putText(detected_both, "straight", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+      # cv2.putText(detected_both, "straight", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+  
+  return side, directions
 
+def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_connect_sequence):
+  side = 999 # -1=left; 0=straight; 1=right
+  apex_coor = []
+  virtual_apex_coor = []
+  tight_turn = 0
+  thres_apex = 0.2
+  
+  side, directions = simple_side_detect(yellow_cone_connect_sequence, red_cone_connect_sequence)
+  if side == -1:
+    cv2.putText(detected_both, "left", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+  if side == 1:
+    cv2.putText(detected_both, "right", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+  if side == 0:
+    cv2.putText(detected_both, "straight", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(255,255,255), 2)
+
+  if directions:
     if len(yellow_cone_connect_sequence) == 3 and len(red_cone_connect_sequence) == 3:
       yellow_x_coor_diff_array = get_differences_3d_xcoor(yellow_cone_connect_sequence)
       red_x_coor_diff_array = get_differences_3d_xcoor(red_cone_connect_sequence)
@@ -488,3 +504,5 @@ def simple_apex_detect(detected_both, yellow_cone_connect_sequence, red_cone_con
     # cv2.arrowedLine(detected_both, )
 
   return apex_coor, side
+
+# def extreme_simple_apex(detected_both, yellow_cone_connect_sequence, red_cone_connect_sequence):

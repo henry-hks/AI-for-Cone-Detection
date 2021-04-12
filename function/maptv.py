@@ -1,13 +1,63 @@
 import cv2
 import numpy as np 
-import math
+import math, os
 import motion_control as mc
+import serial
+import adv_cone_connect as acc
+
+# serial output
+COM_PORT = '/dev/cu.usbmodemFD141'
+# BAUD_RATES = 115200
+BAUD_RATES = 9600
+# ser = serial.Serial(COM_PORT, BAUD_RATES)
 
 width = 300
 height = 450
 bg_mid_x = int(width/2)
 starting_height = height - 100
 background = np.zeros((height,width,3), np.uint8)
+
+def nothing(x):
+    pass
+
+cv2.namedWindow("Yellow Cones")
+cv2.createTrackbar("Y-1x", "Yellow Cones", 50, 200, nothing)
+cv2.createTrackbar("Y-2x", "Yellow Cones", 47, 200,  nothing)
+cv2.createTrackbar("Y-3x", "Yellow Cones", 34, 200,  nothing)
+cv2.createTrackbar("Y-1z", "Yellow Cones", 75, 300,  nothing)
+cv2.createTrackbar("Y-2z", "Yellow Cones", 119, 300,  nothing)
+cv2.createTrackbar("Y-3z", "Yellow Cones", 200, 300,  nothing)
+
+cv2.namedWindow("Red Cones")
+cv2.createTrackbar("R-1x", "Red Cones", 155, 200, nothing)
+cv2.createTrackbar("R-2x", "Red Cones", 152, 200,  nothing)
+cv2.createTrackbar("R-3x", "Red Cones", 146, 200,  nothing)
+cv2.createTrackbar("R-1z", "Red Cones", 92, 300,  nothing)
+cv2.createTrackbar("R-2z", "Red Cones", 140, 300,  nothing)
+cv2.createTrackbar("R-3z", "Red Cones", 200, 300,  nothing)
+
+def distance_2_color(pt1, pt2):
+    #euclidean distance
+    distance = math.sqrt((pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2)
+    distance_ratio = distance/180
+    print("distance_ratio", distance_ratio)
+    color_b = 10
+    color_g = distance_ratio*255 + 100
+    print("color g", color_g)
+    color_r = 300 - distance_ratio*255
+
+    if color_g < 0:
+        color_g = 0
+    if color_g > 255:
+        color_g = 255
+
+    if color_r < 0:
+        color_r = 0
+    if color_r > 255:
+        color_r = 255
+
+    color = [color_b, int(color_g), int(color_r)]
+    return color
 
 def get_map(yellow_cone_connect_sequence, red_cone_connect_sequence):
     # generate a black background
@@ -20,7 +70,7 @@ def get_map(yellow_cone_connect_sequence, red_cone_connect_sequence):
     #draw the lines indicating the FOV
     #realsense d435i has 86 fov
     fov = 86
-    fov_rad = 86 * math.pi/180
+    fov_rad = fov * math.pi/180
     line_end_y = int(bg_mid_x / math.tan(fov_rad/2))
 
     cv2.line(background, (bg_mid_x,starting_height), (0, line_end_y), (200,200,200), 1)
@@ -54,11 +104,18 @@ def get_map(yellow_cone_connect_sequence, red_cone_connect_sequence):
     return background, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv
 
 def connect_on_map(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
-    if yellow_cone_connect_sequence and red_cone_connect_sequence:
-        cv2.line(top_view_map, (yellow_cone_connect_sequence_tv[0][0], yellow_cone_connect_sequence_tv[0][1]) , (yellow_cone_connect_sequence_tv[1][0], yellow_cone_connect_sequence_tv[1][1]), (255,255,100), 1)
-        cv2.line(top_view_map, (yellow_cone_connect_sequence_tv[1][0], yellow_cone_connect_sequence_tv[1][1]) , (yellow_cone_connect_sequence_tv[2][0], yellow_cone_connect_sequence_tv[2][1]), (255,255,100), 1)
-        cv2.line(top_view_map, (red_cone_connect_sequence_tv[0][0], red_cone_connect_sequence_tv[0][1]) , (red_cone_connect_sequence_tv[1][0], red_cone_connect_sequence_tv[1][1]), (255,100,255), 1)
-        cv2.line(top_view_map, (red_cone_connect_sequence_tv[1][0], red_cone_connect_sequence_tv[1][1]) , (red_cone_connect_sequence_tv[2][0], red_cone_connect_sequence_tv[2][1]), (255,100,255), 1)
+    for i in range(len(yellow_cone_connect_sequence_tv)):
+        if i < len(yellow_cone_connect_sequence_tv)-1:
+            cv2.line(top_view_map, (yellow_cone_connect_sequence_tv[i][0], yellow_cone_connect_sequence_tv[i][1]) , (yellow_cone_connect_sequence_tv[i+1][0], yellow_cone_connect_sequence_tv[i+1][1]), (255,255,100), 1)
+    for i in range(len(red_cone_connect_sequence_tv)):
+        if i < len(red_cone_connect_sequence_tv)-1:
+            cv2.line(top_view_map, (red_cone_connect_sequence_tv[i][0], red_cone_connect_sequence_tv[i][1]) , (red_cone_connect_sequence_tv[i+1][0], red_cone_connect_sequence_tv[i+1][1]), (255,100,255), 1)
+        
+    # if len(yellow_cone_connect_sequence) >=3 and len(red_cone_connect_sequence)>=3:
+    #     cv2.line(top_view_map, (yellow_cone_connect_sequence_tv[0][0], yellow_cone_connect_sequence_tv[0][1]) , (yellow_cone_connect_sequence_tv[1][0], yellow_cone_connect_sequence_tv[1][1]), (255,255,100), 1)
+    #     cv2.line(top_view_map, (yellow_cone_connect_sequence_tv[1][0], yellow_cone_connect_sequence_tv[1][1]) , (yellow_cone_connect_sequence_tv[2][0], yellow_cone_connect_sequence_tv[2][1]), (255,255,100), 1)
+    #     cv2.line(top_view_map, (red_cone_connect_sequence_tv[0][0], red_cone_connect_sequence_tv[0][1]) , (red_cone_connect_sequence_tv[1][0], red_cone_connect_sequence_tv[1][1]), (255,100,255), 1)
+    #     cv2.line(top_view_map, (red_cone_connect_sequence_tv[1][0], red_cone_connect_sequence_tv[1][1]) , (red_cone_connect_sequence_tv[2][0], red_cone_connect_sequence_tv[2][1]), (255,100,255), 1)
 
 def apex_on_map(top_view_map, apex_coor, side):
     width = 300
@@ -68,11 +125,13 @@ def apex_on_map(top_view_map, apex_coor, side):
     
     apex_coor_tv_x = int(bg_mid_x + 100*apex_coor[0][2][0])
     apex_coor_tv_y = int(starting_height - 100*apex_coor[0][2][2])
-    cv2.drawMarker(top_view_map, (apex_coor_tv_x, apex_coor_tv_y), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
+    cv2.drawMarker(top_view_map, (apex_coor_tv_x, apex_coor_tv_y), (200,100,200), cv2.MARKER_SQUARE, 20,1,1)
     if side == -1:
-        cv2.putText(top_view_map, "APEX", (apex_coor_tv_x - 50, apex_coor_tv_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
+        apex = (apex_coor_tv_x - 50, apex_coor_tv_y)
+        cv2.putText(top_view_map, "APEX", apex, cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
     elif side == 1:
-        cv2.putText(top_view_map, "APEX", (apex_coor_tv_x + 10, apex_coor_tv_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
+        apex = (apex_coor_tv_x + 10 , apex_coor_tv_y)
+        cv2.putText(top_view_map, "APEX", apex, cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
 
 def get_mids(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
     #try to use cv2.ellipse
@@ -83,20 +142,70 @@ def get_mids(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_seq
 
     return path_pt_0, path_pt_1, path_pt_2
         
-# def path_predict(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv, servo_adjust, distance):
-
 def get_better_path(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
-    path_pt_0 = (int((yellow_cone_connect_sequence_tv[0][0]+ red_cone_connect_sequence_tv[0][0])/2) , int((yellow_cone_connect_sequence_tv[0][1]+ red_cone_connect_sequence_tv[0][1])/2))
-    path_pt_1 = (int((yellow_cone_connect_sequence_tv[1][0]+ red_cone_connect_sequence_tv[1][0])/2) , int((yellow_cone_connect_sequence_tv[1][1]+ red_cone_connect_sequence_tv[1][1])/2))
-    path_pt_2 = (int((yellow_cone_connect_sequence_tv[2][0]+ red_cone_connect_sequence_tv[2][0])/2) , int((yellow_cone_connect_sequence_tv[2][1]+ red_cone_connect_sequence_tv[2][1])/2))
-    
-    pt_difference_1 = abs(path_pt_0[0] - path_pt_1[0])
-    pt_difference_2 = abs(path_pt_1[0] - path_pt_2[0])
-    print("pt difference 1: ", pt_difference_1)
-    print("pt difference 2: ", pt_difference_2)
+    if len(yellow_cone_connect_sequence_tv) ==3 and len(red_cone_connect_sequence_tv) == 3:
+        path_pt_0 = (int((yellow_cone_connect_sequence_tv[0][0]+ red_cone_connect_sequence_tv[0][0])/2) , int((yellow_cone_connect_sequence_tv[0][1]+ red_cone_connect_sequence_tv[0][1])/2))
+        path_pt_1 = (int((yellow_cone_connect_sequence_tv[1][0]+ red_cone_connect_sequence_tv[1][0])/2) , int((yellow_cone_connect_sequence_tv[1][1]+ red_cone_connect_sequence_tv[1][1])/2))
+        path_pt_2 = (int((yellow_cone_connect_sequence_tv[2][0]+ red_cone_connect_sequence_tv[2][0])/2) , int((yellow_cone_connect_sequence_tv[2][1]+ red_cone_connect_sequence_tv[2][1])/2))
+        
+        pt_difference_1 = abs(path_pt_0[0] - path_pt_1[0])
+        pt_difference_2 = abs(path_pt_1[0] - path_pt_2[0])
+        print("pt difference 1: ", pt_difference_1)
+        print("pt difference 2: ", pt_difference_2)
 
     # if pt_difference_1 - pt_difference_2 <= 15:
 
+def get_slope_tv(cone_connect_sequence_tv):
+    yolo_slopes = []
+    for i in range(len(cone_connect_sequence_tv)):
+        if i != len(cone_connect_sequence_tv)-1:
+        # #root depth
+        # root_depth = cone_connect_sequence[i][2][2]
+
+        # zdiff = 
+        #get the slopes between yellow cones
+            xdiff = (cone_connect_sequence_tv[i][1]) - (cone_connect_sequence_tv[i+1][1])
+            ydiff = (cone_connect_sequence_tv[i][0]) - (cone_connect_sequence_tv[i+1][0])
+            if xdiff != 0:
+                sl = round(np.true_divide(ydiff, xdiff, out=None), 5)
+            else:
+                sl = 999
+            yolo_slopes.append(sl)
+
+    
+    return yolo_slopes
+
+def get_better_path_2(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
+    yellow_slope = get_slope_tv(yellow_cone_connect_sequence_tv)
+    red_slope = get_slope_tv(red_cone_connect_sequence_tv)
+
+    #initial values
+    side = 999 
+    
+    print("yellow slope: ", yellow_slope)
+    print("red slope: ", red_slope)
+
+    if len(yellow_slope) == 2:
+        avg_slope_yellow = (yellow_slope[0] + yellow_slope[1]) / 2
+        print("yellow slope avg: ", avg_slope_yellow)
+
+    if len(red_slope) == 2:
+        avg_slope_red = (red_slope[0] + red_slope[1]) / 2
+        print("red slope avg: ", avg_slope_red)
+
+    if len(yellow_slope) == 2 and len(red_slope) == 2:
+        avg_of_avg_slopes = (avg_slope_yellow + avg_slope_red) / 2
+        # if avg_of_avg_slopes <= 0:
+        print("avg of avg slopes: ", avg_of_avg_slopes)
+        if -0.1 < avg_of_avg_slopes < 0.1:
+            side = 0 #straight
+        elif avg_of_avg_slopes >= 0.1 or red_slope[0] == 999 or red_slope[1] == 999:
+            side = -1 #left
+        elif avg_of_avg_slopes <= - 0.1 or yellow_slope[0] == 999 or yellow_slope[1] == 999:
+            side = 1 #right
+        print("better side: ", side)
+
+    return side
 
 def instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_connect_sequence, red_cone_connect_sequence, apex_coor, side):
     width = 300
@@ -107,15 +216,22 @@ def instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_co
     
     #initial values
     angle = 0
-    distance = 0
+    distance1 = 0
+    distance2 = 0
     servo_adjust = 0
     speed = 0
+    x_coor = 0
+    depth = 0
+    next_point = ()
     
     top_view_map, yccs_tv, rccs_tv = get_map(yellow_cone_connect_sequence, red_cone_connect_sequence)
     connect_on_map(top_view_map, yccs_tv, rccs_tv)
-    path_pt_0, path_pt_1, path_pt_2 = get_mids(top_view_map, yccs_tv, rccs_tv)
+    if len(yccs_tv) == 3:
+        path_pt_0, path_pt_1, path_pt_2 = get_mids(top_view_map, yccs_tv, rccs_tv)
     get_better_path(top_view_map, yccs_tv, rccs_tv)
+    _ = get_better_path_2(top_view_map, yccs_tv, rccs_tv)
 
+    #first layer
     if not center_with_depth_yellow and not center_with_depth_red:
         print("No Cone Detected! Action: STOP / EXPLORE") #stop the car
         servo_adjust = 0
@@ -125,76 +241,111 @@ def instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_co
         if center_with_depth_yellow:
             if center_with_depth_yellow[0][1] <= 60 and center_with_depth_yellow[0][2][0] >= -0.02: ##car crashing into the yellow cone
                 print("Turn Right NOW!") # turn right immediately
-                servo_adjust = -15
-                speed = 5
-            if yellow_cone_connect_sequence: #yellow cone detected
+                angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_yellow[0], 1)
+
+                # servo_adjust = -40
+                # speed = 5
+            elif yellow_cone_connect_sequence: #yellow cone detected
                 # if yellow_cone_connect_sequence[0][1] <= 60 and yellow_cone_connect_sequence[0][2][0] >= -0.02: #car crashing into the yellow cone
-                #         print("Turn Right Now!") #turn right immediately
+                    # print("Turn Right Now!") #turn right immediately
                 go_to_second_layer += 1
         
         if center_with_depth_red:
             if center_with_depth_red[0][1] <= 60 and center_with_depth_red[0][2][0] <= 0.02: ##car crashing into the red cone
                 print("Turn left NOW!") # turn left immediately
-                servo_adjust = 15
-                speed = 5
-            if red_cone_connect_sequence: #red cond detected
+                angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_red[0], 1)
+
+                # servo_adjust = 40
+                # speed = 5
+            elif red_cone_connect_sequence: #red cond detected
                 # if red_cone_connect_sequence[0][1] <= 60 and red_cone_connect_sequence[0][2][0] <= 0.02: #car crashing into the red cone
                 #         print("Turn Left Now!") #turn left immediately
                 go_to_second_layer += 1
-    
-    # else:
-    #     cv2.arrowedLine(top_view_map, (int(width/2), height-20), (int(width/2), int(height/2)), (10,255,10), 2)
-    #     print("Move Straight!")
-    #     servo_adjust = 0
-    #     speed = 100
 
     if go_to_second_layer == 2:
-        cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), path_pt_0, (0,0,200), 1)
-        cv2.arrowedLine(top_view_map, path_pt_0, path_pt_1, (0,0,200), 1)
-        cv2.arrowedLine(top_view_map, path_pt_1, path_pt_2, (0,0,200), 1)
+        #second layer
         if apex_coor:
             apex_on_map(top_view_map, apex_coor, side)
-            angle, distance, x_coor, depth = np.round(mc.motion_needed(apex_coor, side),3)
-            angle = angle
-            distance = distance
-            cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)), (10,255,10), 1)
-            
-            servo_adjust = round(mc.steering(angle))
-            speed = round(mc.speed_control(distance))
+            angle, distance1, x_coor, depth, next_point, distance2 = mc.motion_needed(apex_coor, side, yellow_cone_connect_sequence, red_cone_connect_sequence)
         
-        else:
-            # if side == 0:
-                # cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), path_pt_0, (10,255,10), 1)
-                # cv2.arrowedLine(top_view_map, path_pt_0, path_pt_1, (10,255,10), 1)
-                # cv2.arrowedLine(top_view_map, path_pt_1, path_pt_2, (10,255,10), 1)
+            if len(yccs_tv) == 3 and len(rccs_tv):
+                cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), path_pt_0, (0,0,200), 1)
+                cv2.arrowedLine(top_view_map, path_pt_0, path_pt_1, (0,0,200), 1)
+                cv2.arrowedLine(top_view_map, path_pt_1, path_pt_2, (0,0,200), 1)
+
+        else: #straigh
+            # cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), path_pt_0, (10,255,10), 1)
+            color1 = distance_2_color(path_pt_0, path_pt_1)
+            color2 = distance_2_color(path_pt_1, path_pt_2)
+            cv2.arrowedLine(top_view_map, path_pt_0, path_pt_1, color1, 1)
+            cv2.arrowedLine(top_view_map, path_pt_1, path_pt_2, color2, 1)
+            
+            first_cones_midpt = [0,0,[(yellow_cone_connect_sequence[0][2][0]+ red_cone_connect_sequence[0][2][0])/2, 0 , (yellow_cone_connect_sequence[0][2][2]+ red_cone_connect_sequence[0][2][2])/2]]
+            angle, distance1, x_coor, depth = mc.immediate_motion_needed(first_cones_midpt, 0)
             print("Move Straight!")
-            servo_adjust = 0
-            speed = 100
+            # servo_adjust = 0
+            # speed = 100
+    
+    angle = round(angle,1)
+    distance1 = round(distance1,1)
+    distance2 = round(distance2,1)
+
+    if depth != 0:
+        color = distance_2_color((bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)))
+        cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)), color, 1)
+    if next_point:
+        cv2.putText(top_view_map, "Exit PT",(bg_mid_x + next_point[0] - 30, starting_height - next_point[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
+        color_np = distance_2_color((int(bg_mid_x + x_coor), int(starting_height - depth)), (bg_mid_x + next_point[0], starting_height - next_point[1]))
+        cv2.arrowedLine(top_view_map, (int(bg_mid_x + x_coor), int(starting_height - depth)), (bg_mid_x + next_point[0], starting_height - next_point[1])  , color_np, 1)
+    servo_adjust = round(mc.steering(angle))
+    if servo_adjust >= 10:
+        speed = round(mc.speed_control(distance1))
+    else:
+        speed = 100
 
     print("angular distance: ", angle)
-    print("distance: ", distance)
+    print("distance1: ", distance1)
+    print("distance2: ", distance2)
     print("servo_adjust: ", servo_adjust)
     print("speed: ", speed)
+    
         
     # elif side == 0:
     #     cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), (bg_mid_x, int(starting_height - 50)), (10,255,10), 1)
     
-    cv2.putText(top_view_map, "Angluar distance of the apex: {}".format(angle), (5 ,height-55), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-    cv2.putText(top_view_map, "Distance of the apex: {}".format(distance), (5 ,height-40), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-    cv2.putText(top_view_map, "Servo adjust: {}".format(servo_adjust), (5 ,height-25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+    if apex_coor:
+        cv2.putText(top_view_map, "Angluar distance of the Apex: {}".format(angle), (5 ,height-55), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+        cv2.putText(top_view_map, "Distance of the apex: {}".format(distance1), (5 ,height-40), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+        cv2.putText(top_view_map, "Distance of exit pt.: {}".format(distance2), (5 ,height-70), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+    cv2.putText(top_view_map, "Servo Adjust: {}".format(servo_adjust), (5 ,height-25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
     cv2.putText(top_view_map, "PWM: {}".format(speed), (5 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
 
-    return top_view_map
+    return top_view_map, servo_adjust, speed
 
 while 1:
+    #get trackbars values
+    y1x = (cv2.getTrackbarPos("Y-1x", "Yellow Cones") - 100) / 100
+    y2x = (cv2.getTrackbarPos("Y-2x", "Yellow Cones") - 100) / 100
+    y3x = (cv2.getTrackbarPos("Y-3x", "Yellow Cones") - 100) / 100
+    y1z = (cv2.getTrackbarPos("Y-1z", "Yellow Cones") ) / 100
+    y2z = (cv2.getTrackbarPos("Y-2z", "Yellow Cones") ) / 100
+    y3z = (cv2.getTrackbarPos("Y-3z", "Yellow Cones") ) / 100
+
+    r1x = (cv2.getTrackbarPos("R-1x", "Red Cones") - 100) / 100
+    r2x = (cv2.getTrackbarPos("R-2x", "Red Cones") - 100) / 100
+    r3x = (cv2.getTrackbarPos("R-3x", "Red Cones") - 100) / 100
+    r1z = (cv2.getTrackbarPos("R-1z", "Red Cones") ) / 100
+    r2z = (cv2.getTrackbarPos("R-2z", "Red Cones") ) / 100
+    r3z = (cv2.getTrackbarPos("R-3z", "Red Cones") ) / 100
+
     #right 2 no fps
-    center_with_depth_yellow = [[[93, 175], 64.3, [-0.2825795114040375, 0.0559876412153244, 0.6420000195503235]], [[138, 142], 126.3, [-0.3470691442489624, 0.023156538605690002, 1.25600004196167]], [[214, 132], 147.3, [-0.01610095053911209, -0.04037623479962349, 1.4730000495910645]]]
-    center_with_depth_red = [[[377, 170], 62.3, [0.3294704854488373, 0.06442820280790329, 0.6220000386238098]], [[299, 141], 112.6, [0.29812708497047424, -0.023531462997198105, 1.128000020980835]], [[339, 126], 146.7, [0.5794180631637573, 0.10597564280033112, 1.4300000667572021]]]
+    # center_with_depth_yellow = [[[93, 175], 64.3, [-0.2825795114040375, 0.0559876412153244, 0.6420000195503235]], [[138, 142], 126.3, [-0.3470691442489624, 0.023156538605690002, 1.25600004196167]], [[214, 132], 147.3, [-0.01610095053911209, -0.04037623479962349, 1.4730000495910645]]]
+    # center_with_depth_red = [[[377, 170], 62.3, [0.3294704854488373, 0.06442820280790329, 0.6220000386238098]], [[299, 141], 112.6, [0.29812708497047424, -0.023531462997198105, 1.128000020980835]], [[339, 126], 146.7, [0.5794180631637573, 0.10597564280033112, 1.4300000667572021]]]
     
-    yellow_cone_connect_sequence = [[[93, 175], 64.3, [-0.2825795114040375, 0.0559876412153244, 0.6420000195503235]], [[138, 142], 126.3, [-0.3470691442489624, 0.023156538605690002, 1.25600004196167]], [[214, 132], 147.3, [-0.01610095053911209, -0.04037623479962349, 1.4730000495910645]]]
-    red_cone_connect_sequence = [[[377, 170], 62.3, [0.3294704854488373, 0.06442820280790329, 0.6220000386238098]], [[299, 141], 112.6, [0.29812708497047424, -0.023531462997198105, 1.128000020980835]], [[339, 126], 146.7, [0.5794180631637573, 0.10597564280033112, 1.4300000667572021]]]
-    apex_coor = [[[299, 141], 112.6, [0.29812708497047424, -0.023531462997198105, 1.128000020980835]]]
-    side = 1
+    # yellow_cone_connect_sequence = [[[93, 175], 64.3, [-0.2825795114040375, 0.0559876412153244, 0.6420000195503235]], [[138, 142], 126.3, [-0.3470691442489624, 0.023156538605690002, 1.25600004196167]], [[214, 132], 147.3, [-0.01610095053911209, -0.04037623479962349, 1.4730000495910645]]]
+    # red_cone_connect_sequence = [[[377, 170], 62.3, [0.3294704854488373, 0.06442820280790329, 0.6220000386238098]], [[299, 141], 112.6, [0.29812708497047424, -0.023531462997198105, 1.128000020980835]], [[339, 126], 146.7, [0.5794180631637573, 0.10597564280033112, 1.4300000667572021]]]
+    # apex_coor = [[[299, 141], 112.6, [0.29812708497047424, -0.023531462997198105, 1.128000020980835]]]
+    # side = 1
 
     #left 4 no fps
     # center_with_depth_yellow = [[[9, 201], 43.7, [-0.3090497553348541, 0.07514622807502747, 0.4360000193119049]], [[110, 182], 119.0, [-0.418509840965271, 0.18561571836471558, 1.190000057220459]], [[62, 172], 161.7, [-0.8123952746391296, 0.22574199736118317, 1.6170001029968262]]]
@@ -229,9 +380,70 @@ while 1:
     # apex_coor = []
     # side = 0
 
-    top_view_map = instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_connect_sequence, red_cone_connect_sequence, apex_coor, side)
+    #90 turn left
+    center_with_depth_yellow =  [[[9, 200], 43.6, [-0.4090497553348541, 0.0722905769944191, 0.4360000193119049]], [[111, 182], 118.3, [-0.20168479084968567, 0.1794281005859375, 0.4378]], [[150, 169], 181.6, [-0.41142502427101135, 0.20537972450256348, 1.811000108718872]]]
+    center_with_depth_red = [[[406, 193], 71.4, [0.46710100769996643, 0.13475172221660614, 0.7140000462532043]], [[320, 177], 128.6, [0.43861204385757446, 0.22044043242931366, 0.7]], [[289, 167], 182.6, [0.4119362235069275, 0.23762892186641693, 1.8310000896453857]]]
 
+    yellow_cone_connect_sequence =  [[[9, 200], 43.6, [-0.3090497553348541, 0.0722905769944191, 0.4360000193119049]], [[111, 182], 118.3, [-0.40168479084968567, 0.1794281005859375, 1.1750000715255737]], [[150, 169], 181.6, [-0.41142502427101135, 0.20537972450256348, 1.811000108718872]]]
+    red_cone_connect_sequence = [[[406, 193], 71.4, [0.46710100769996643, 0.13475172221660614, 0.7140000462532043]], [[320, 177], 128.6, [0.43861204385757446, 0.22044043242931366, 1.2790000438690186]], [[289, 167], 182.6, [0.4119362235069275, 0.23762892186641693, 1.8310000896453857]]]
+    # apex_coor = []
+    # side = 0
+
+    image = background
+    '''
+    #variable cones
+    center_with_depth_yellow = [[[0,0], y1z*100, [y1x,0,y1z]], [[0,0], y2z*100, [y2x,0,y2z]], [[0,0], y3z*100, [y3x,0,y3z]]]
+    center_with_depth_red = [[[0,0], r1z*100, [r1x,0,r1z]], [[0,0], r2z*100, [r2x,0,r2z]], [[0,0], r3z*100, [r3x,0,r3z]]]
+
+    yellow_cone_connect_sequence = [[[0,0], y1z*100, [y1x,0,y1z]], [[0,0], y2z*100, [y2x,0,y2z]], [[0,0], y3z*100, [y3x,0,y3z]]]
+    red_cone_connect_sequence = [[[0,0], r1z*100, [r1x,0,r1z]], [[0,0], r2z*100, [r2x,0,r2z]], [[0,0], r3z*100, [r3x,0,r3z]]]
+    '''
+    side, directions = acc.simple_side_detect(yellow_cone_connect_sequence, red_cone_connect_sequence)
+    print("side: ", side)
+    print("direction: ", directions)
+    apex_coor, _ = acc.simple_apex_detect(image, yellow_cone_connect_sequence, red_cone_connect_sequence)
+
+    top_view_map, servo_adjust, speed = instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_connect_sequence, red_cone_connect_sequence, apex_coor, side)
+    servo_sign = np.sign(servo_adjust)
+    print("servo_sign: ",servo_sign)
+    sign = 0
+    if servo_sign == 1 or servo_sign == 0:
+        sign = 0
+    elif servo_sign == -1:
+        sign = 1
+    print("sign: ", sign)
+    
+    servo_adjust_for_send = "0"
+    if 0 <= abs(servo_adjust) < 10: #single digit
+        servo_adjust_for_send = "0{}".format(abs(servo_adjust))
+    else: #double digits
+        servo_adjust_for_send = "{}".format(abs(servo_adjust))
+    
+    speed_for_send = "0"
+    if 0 <= speed < 10: #single digit
+        speed_for_send = "00{}".format(speed)
+    elif 10 <= speed < 100: #double digits
+        speed_for_send = "0{}".format(speed)
+    elif speed == 100: #100
+        speed_for_send = "{}".format(speed)
+
+    # message = "{}{}".format(sign, servo_adjust_for_send)
+    message = "F{}{}{}".format(speed_for_send, sign, servo_adjust_for_send)
+    print("message: ", message)
+    cv2.putText(top_view_map, "Message: {}".format(message), (bg_mid_x + 50 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+    # ser.write(message.encode())
     cv2.imshow("map", top_view_map)
+
+    #capture results
+    time_for_capture = 0
+    k = cv2.waitKey(33)
+    if k == ord('a'): #press a to cap
+        time_for_capture = 1
+        if time_for_capture == 1:
+            time_for_capture = 0
+            path_dir = "/Volumes/HenrySSD/Polyu_EIE/FYP/11APR/tv_map/"
+            cv2.imwrite(os.path.join(path_dir, "top-view_map.jpg"), top_view_map)
+
     key = cv2.waitKey(25)
     if key == 27:
         break
