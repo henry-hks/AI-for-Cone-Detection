@@ -81,13 +81,25 @@ align = rs.align(align_to)
 # BAUD_RATES = 9600
 # ser = serial.Serial(COM_PORT, BAUD_RATES)
 
-apex_coor_array = []
+angle_dists_array = []
+ada_memory = []
+speed_array = []
+servo_array = []
+counter = 0
+first_run = 1
+sos_counter = 0
+camera_coor = [[0,0],0,[0,0,0]]
 
 try:
         frame_count = 0
         start_time = time.time()
 
         while True:
+                width = 300
+                height = 450
+                bg_mid_x = int(width/2)
+                starting_height = height - 100
+
                 # Wait for a coherent pair of frames: depth and color
                 frames = pipeline.wait_for_frames()
                 frame_time = time.time() - start_time
@@ -192,21 +204,33 @@ try:
                 advanced = image
 
                 #detect for yellow cone
+                yellow_detections = []
                 yellow_detections, masked_yellow = yolo_fct.cone_detect(image_rgb, mask_yellow, net, (255,0,100), "Yellow Cone")
+                # print("yellow detections: ", yellow_detections)
+                # yellow_detections = yellow_detections[0]
                 # yellow_detections = yolo_fct.cone_detect(image, mask_yellow, net, (255,0,100), "Yellow Cone")
                 # detected_both, detected_yellow, yolo_yellow_cones_center, yellow_detections = yolo_fct.cone_detect(detected_both, image, mask_yellow, net, (255,0,100), "Yellow Cone")
                 
                 #detect for red cone
+                red_detections = []
                 red_detections, masked_red = yolo_fct.cone_detect(depthimg_colormap, mask_red, net, (120,100,255), "Red Cone")
+                # print("red detections: ", red_detections)
+                # red_detections = red_detections[0]
                 # red_detections = yolo_fct.cone_detect(image, mask_red, net, (120,100,255), "Red Cone")
                 # detected_both, detected_red, yolo_red_cones_center, red_detections = yolo_fct.cone_detect(detected_both, image, mask_red, net, (120,100,255), "Red Cone")
 
                 #get depth data from depthmap
-                advanced, center_with_depth_yellow = acc.getDepth_dcm(yellow_detections, depth_frame, depthimg, advanced, colors)
-                advanced, center_with_depth_red = acc.getDepth_dcm(red_detections, depth_frame, depthimg, advanced, colors)
+                center_with_depth_yellow = []
+                center_with_depth_red = []
+                yellow_cone_connect_sequence = []
+                red_cone_connect_sequence = []
+                if yellow_detections:
+                        advanced, center_with_depth_yellow = acc.getDepth_dcm(yellow_detections, depth_frame, depthimg, advanced, colors)
+                if red_detections:
+                        advanced, center_with_depth_red = acc.getDepth_dcm(red_detections, depth_frame, depthimg, advanced, colors)
 
                 #project the raw cones to the top-view map
-                top_view_map_raw, yellow_cone_tv_coors, red_cone_tv_coor = maptv.get_map(center_with_depth_yellow, center_with_depth_red)
+                # top_view_map_raw, yellow_cone_tv_coors, red_cone_tv_coor = maptv.get_map(center_with_depth_yellow, center_with_depth_red)
                 
                 #connect the yellow & red cone centers (2D)
                 # detected_both, detected_yellow, yolo_slopes_yellow = yolo_fct.cone_connect(detected_yellow, detected_both, yolo_yellow_cones_center)
@@ -217,11 +241,9 @@ try:
                 advanced, red_cone_connect_sequence = acc.cone_connect_with_depth(advanced, center_with_depth_red, 1)
 
                 #project the cones sequence to another top-view map
-                top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv = maptv.get_map(yellow_cone_connect_sequence, red_cone_connect_sequence)
-                maptv.connect_on_map(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv)
+                # top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv = maptv.get_map(yellow_cone_connect_sequence, red_cone_connect_sequence)
+                # maptv.connect_on_map(top_view_map, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv)
 
-                # print("slope yellow: ", yolo_slopes_yellow)
-                # print("slope red: ", yolo_slopes_red)
                 # print("real coor yellow: ", yellow_cone_connect_sequence)
                 # print("real coor red: ", red_cone_connect_sequence)
 
@@ -246,73 +268,137 @@ try:
                 # cv2.drawMarker(detected_both, (apex_coor[0][0][0], apex_coor[0][0][1]), (0,200,200), cv2.MARKER_CROSS, 10,1,1)
                 # cv2.putText(detected_both, "APEX", (apex_coor[0][0][0], apex_coor[0][0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6,(0,255,10), 2)
                 
-                height, width, _ = advanced.shape
+                # height, width, _ = advanced.shape
 
                 #main control algorithm
                 go_to_second_layer = 0
                 servo_adjust = 0
+                servo_adjust_round_10 = 0
                 speed = 0
                 angle = 0
                 distance1 = 0
                 distance2 = 0
+                angle_fc = -999
+                distance_fc = -999
                 x_coor = 0
                 depth = 0
+                apex_coor = []
+                trans_pt = 0
                 next_point = ()
+                yccs_tv = []
+                rccs_tv = []
+                # top_view_map, servo_adjust, speed = maptv.instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_connect_sequence, red_cone_connect_sequence, apex_coor, side)
+                
+                _, yccs_tv, rccs_tv = maptv.get_map(yellow_cone_connect_sequence, red_cone_connect_sequence)
+                top_view_map, cwdy_tv, cwdy_tv = maptv.get_map(center_with_depth_yellow, center_with_depth_red)
+                top_view_map_raw = top_view_map
+                if yellow_cone_connect_sequence or red_cone_connect_sequence:
+                        
+                        if len(yccs_tv) == 3 or len(rccs_tv) ==3:
+                                maptv.connect_on_map(top_view_map, yccs_tv, rccs_tv)
+                        if len(yccs_tv) == 3 and len(rccs_tv) ==3:
+                                path_pt_0, path_pt_1, path_pt_2 = maptv.get_mids(top_view_map, yccs_tv, rccs_tv)
+                        # maptv.get_better_path(top_view_map, yccs_tv, rccs_tv)
+                        # _ = maptv.get_better_path_2(top_view_map, yccs_tv, rccs_tv)
+                # else:
+                #         top_view_map_raw, cwdy_tv, cwdy_tv = maptv.get_map(center_with_depth_yellow, center_with_depth_red)
+                        
+                #         # top_view_map_raw = top_view_map
+                #         maptv.connect_on_map(top_view_map_raw, cwdy_tv, cwdy_tv)
 
-                top_view_map, yccs_tv, rccs_tv = maptv.get_map(yellow_cone_connect_sequence, red_cone_connect_sequence)
-                maptv.connect_on_map(top_view_map, yccs_tv, rccs_tv)
-                if len(yccs_tv) == 3:
-                        path_pt_0, path_pt_1, path_pt_2 = maptv.get_mids(top_view_map, yccs_tv, rccs_tv)
-                maptv.get_better_path(top_view_map, yccs_tv, rccs_tv)
-                _ = maptv.get_better_path_2(top_view_map, yccs_tv, rccs_tv)
-
-                #first layer (safety net)
+                # layer 0 (safety net)
+                
                 if not yellow_detections and not red_detections: #no cones detected
                         print("No Cone Detected! Action: STOP / EXPLORE") #stop the car
-                        servo_adjust = 0
-                        speed = 0
+                        angle = 999
+                        distance1 = -999
+                        # servo_adjust = 0
+                        # speed = 0
                 
                 elif center_with_depth_yellow or center_with_depth_red:
                         if center_with_depth_yellow:
-                                if center_with_depth_yellow[0][1] <= 60 and center_with_depth_yellow[0][2][0] >= -0.02: ##car crashing into the yellow cone
-                                        print("Turn Right NOW!") # turn right immediately
-                                        angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_yellow[0], 1)
-
                                         # servo_adjust = -15
                                         # speed = 5
-                                elif yellow_cone_connect_sequence: #yellow cone detected
+                                if yellow_cone_connect_sequence: #yellow cone detected
                                         # if yellow_cone_connect_sequence[0][1] <= 60 and yellow_cone_connect_sequence[0][2][0] >= -0.02: #car crashing into the yellow cone
                                         #         print("Turn Right Now!") #turn right immediately
                                         go_to_second_layer += 1
 
                         if center_with_depth_red:
-                                if center_with_depth_red[0][1] <= 60 and center_with_depth_red[0][2][0] <= 0.02: ##car crashing into the red cone
-                                        print("Turn left NOW!") # turn left immediately
-                                        angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_red[0], 1)
-                                        
+                                
                                         # servo_adjust = 15
                                         # speed = 5
-                                elif red_cone_connect_sequence: #red cond detected
+                                if red_cone_connect_sequence: #red cond detected
                                         # if red_cone_connect_sequence[0][1] <= 60 and red_cone_connect_sequence[0][2][0] <= 0.02: #car crashing into the red cone
                                         #         print("Turn Left Now!") #turn left immediately
                                         go_to_second_layer += 1
 
-                # else:
-                #         cv2.arrowedLine(advanced, (int(width/2), height-20), (int(width/2), int(height/2)), (10,255,10), 2)
-                #         print("Move Straight!")
-                #         servo_adjust = 0
-                #         speed = 100
+                # layer 1 (basic movement)
+                if go_to_second_layer == 0 :
+                        # cones detected
+                        # but no ccs and specified detected
+                        if center_with_depth_yellow and not center_with_depth_red:
+                                # only yellow cones detected
+                                # prevent crashing into the red cones
+                                # if center_with_depth_yellow[0][1] <= 60 and center_with_depth_yellow[0][2][0] >= -0.02: ##car crashing into the yellow cone
+                                #         print("Turn Right NOW!") # turn right immediately
+                                #         angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_yellow[0], -2)
+                                
+                                # else:
 
+                                # drive respect to the first detected yellow cone
+                                angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_yellow[0], -2) # -2 for only yellow cone detected
+
+                        if center_with_depth_red and not center_with_depth_yellow:
+                                # only red cones detected
+                                # prevent crashing into the red cones
+                                # if center_with_depth_red[0][1] <= 60 and center_with_depth_red[0][2][0] <= 0.02: ##car crashing into the red cone
+                                #         print("Turn left NOW!") # turn left immediately
+                                #         angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_red[0], 1)
+
+                                # drive respect to the first detected red cone
+                                angle, distance1, x_coor, depth = mc.immediate_motion_needed(center_with_depth_red[0], 2) # 2 for only red cone detected
+
+                        if center_with_depth_red and center_with_depth_yellow:
+                                # both yellow and red cones detected
+                                # calculate the mid point of the first yellow-red cone pair
+                                first_cones_midpt = [0,0,[(center_with_depth_yellow[0][2][0]+ center_with_depth_red[0][2][0])/2, 0 , (center_with_depth_yellow[0][2][2]+ center_with_depth_red[0][2][2])/2]]
+                        
+                                angle, distance1, x_coor, depth = mc.immediate_motion_needed(first_cones_midpt, 0) # 0 for calculate mid point between the first cone pair
+
+                # layer 1.5 (basic movement with ccs)
+                if go_to_second_layer == 1:
+                        # one of the ccs detected
+                        # but no specified path detected
+                        # drive within the left/ right detected track
+                        if yellow_cone_connect_sequence:
+                                angle, distance1, x_coor, depth = mc.immediate_motion_needed(yellow_cone_connect_sequence[0], -2)
+                        elif red_cone_connect_sequence:
+                                angle, distance1, x_coor, depth = mc.immediate_motion_needed(red_cone_connect_sequence[0], 2)
+                                
+                        # servo_adjust = 0
+                        # speed = 100
 
                 #second layer (speed enhance/ cutting corner)
-                if go_to_second_layer == 2:
-                        apex = []
+                if go_to_second_layer == 2: #both ccs detected
                         side = 0
                         apex_coor, side = acc.simple_apex_detect(advanced, yellow_cone_connect_sequence, red_cone_connect_sequence)
                         if apex_coor: #if apex detected
+                                print("apex: ", apex_coor)
                                 maptv.apex_on_map(top_view_map, apex_coor, side)
+                                
                                 angle, distance1, x_coor, depth, next_point, distance2 = mc.motion_needed(apex_coor, side, yellow_cone_connect_sequence, red_cone_connect_sequence)
-
+                                
+                                if side == -1:
+                                        angle_fc, distance_fc, x_coor_fc, depth_fc = mc.immediate_motion_needed(yellow_cone_connect_sequence[0], side)
+                                        if angle_fc > angle: #if the first cone block the way to apex
+                                                trans_pt = 1
+                                elif side == 1:
+                                        angle_fc, distance_fc, x_coor_fc, depth_fc = mc.immediate_motion_needed(red_cone_connect_sequence[0], side)
+                                        if angle_fc < angle: #if the first cone block the way to apex
+                                                trans_pt = 1
+                                                
+                                        
 
                                 # if servo_adjust > 0: # turn left
                                 #         print("Turn Left")
@@ -322,89 +408,208 @@ try:
                                 #         cv2.arrowedLine(advanced, (int(width/2), height-20), (apex_coor[0][0][0]-20, apex_coor[0][0][1]), (10,255,10), 2)
                         
                         else:
+                                print("Move Straight!")
+                                # if yccs_tv and rccs_tv:
                                 color1 = maptv.distance_2_color(path_pt_0, path_pt_1)
                                 color2 = maptv.distance_2_color(path_pt_1, path_pt_2)
                                 cv2.arrowedLine(top_view_map, path_pt_0, path_pt_1, color1, 1)
                                 cv2.arrowedLine(top_view_map, path_pt_1, path_pt_2, color2, 1)
                                 
-                                # cv2.arrowedLine(advanced, (int(width/2), height-20), (int(width/2), int(height/2)), (10,255,10), 2)
                                 first_cones_midpt = [0,0,[(yellow_cone_connect_sequence[0][2][0]+ red_cone_connect_sequence[0][2][0])/2, 0 , (yellow_cone_connect_sequence[0][2][2]+ red_cone_connect_sequence[0][2][2])/2]]
                                 angle, distance1, x_coor, depth = mc.immediate_motion_needed(first_cones_midpt, 0)
-            
-                                print("Move Straight!")
-                                # servo_adjust = 0
-                                # speed = 100
-
-                angle = round(angle,1)
-                distance1 = round(distance1,1)
-                distance2 = round(distance2,1)
-
-                if depth != 0:
-                        color = distance_2_color((bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)))
-                        cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)), color, 1)
-                if next_point:
-                        cv2.putText(top_view_map, "Exit PT",(bg_mid_x + next_point[0] - 30, starting_height - next_point[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
-                        color_np = distance_2_color((int(bg_mid_x + x_coor), int(starting_height - depth)), (bg_mid_x + next_point[0], starting_height - next_point[1]))
-                        cv2.arrowedLine(top_view_map, (int(bg_mid_x + x_coor), int(starting_height - depth)), (bg_mid_x + next_point[0], starting_height - next_point[1])  , color_np, 1)
-                servo_adjust = round(mc.steering(angle))
-                if servo_adjust >= 10:
-                        speed = round(mc.speed_control(distance1))
-                else:
-                        speed = 100
+                                            
+                angle_raw = round(angle,1)
+                distance1_raw = round(distance1,1)
+                distance2_raw = round(distance2,1)
                 
-                print("angular distance: ", angle)
-                print("distance1: ", distance1)
-                print("distance2: ", distance2)
-                print("servo_adjust: ", servo_adjust)
-                print("speed: ", speed)
+                #avg filter the angle & distance
+                if counter <= 5:
+                        counter += 1
+                        angle_dists_array.append([angle_raw, distance1_raw, distance2_raw, x_coor, depth])
+                        if counter == 5:
+                                first_run = 0
+                                #sort array in ascending order
+                                angle_dists_array = sorted(angle_dists_array, key=lambda k:[k[1]])
+                                # print("###################################speed_array: ", speed_array)
+                                # print("###################################servo array: ", servo_array)
+                                print("###############################angle_dists_array: ", angle_dists_array)
+                                # servo_adjust = servo_array[2]
+                                # speed_array = speed_array[2]
+                                
+                                ada_memory = angle_dists_array # store the angle_dists_array into an memory array
+                                #reset counter
+                                counter = 0
+                                #clear arrays
+                                angle_dists_array = []
+                                # servo_array = []
+                                # speed_array = []
+                        
 
-                if apex_coor:
-                        cv2.putText(top_view_map, "Angluar distance of the Apex: {}".format(angle), (5 ,height-55), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-                        cv2.putText(top_view_map, "Distance of the apex: {}".format(distance1), (5 ,height-40), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-                        cv2.putText(top_view_map, "Distance of exit pt.: {}".format(distance2), (5 ,height-70), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-                cv2.putText(top_view_map, "Servo Adjust: {}".format(servo_adjust), (5 ,height-25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-                cv2.putText(top_view_map, "PWM: {}".format(speed), (5 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                if first_run == 0 and len(ada_memory) == 5:
+                        angle = ada_memory[2][0]
+                        distance1 = ada_memory[2][1]
+                        distance2 = ada_memory[2][2]
+                        x_coor = ada_memory[2][3]
+                        depth = ada_memory[2][4]
+                        if counter == 4:
+                                # clear the memory array after utilization in counter 4
+                                ada_memory = []
+                        if depth != 0:
+                                if trans_pt == 1: #if transfer point exists
+                                        color_tp = maptv.distance_2_color((bg_mid_x, starting_height), (int(bg_mid_x + x_coor_fc), int(starting_height - depth_fc)))
+                                        color_tpp = maptv.distance_2_color((int(bg_mid_x + x_coor_fc), int(starting_height - depth_fc)), (int(bg_mid_x + x_coor), int(starting_height - depth)))
+                                        cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), (int(bg_mid_x + x_coor_fc), int(starting_height - depth_fc)), color_tp, 1)
+                                        cv2.arrowedLine(top_view_map, (int(bg_mid_x + x_coor_fc), int(starting_height - depth_fc)), (int(bg_mid_x + x_coor), int(starting_height - depth)), color_tpp, 1)
+                                else:
+                                        color = maptv.distance_2_color((bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)))
+                                        cv2.arrowedLine(top_view_map, (bg_mid_x, starting_height), (int(bg_mid_x + x_coor), int(starting_height - depth)), color, 1)
+                        if next_point and trans_pt == 0:
+                                cv2.putText(top_view_map, "Exit PT",(bg_mid_x + next_point[0] - 30, starting_height - next_point[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0,255,10), 1)
+                                color_np = maptv.distance_2_color((int(bg_mid_x + x_coor), int(starting_height - depth)), (bg_mid_x + next_point[0], starting_height - next_point[1]))
+                                cv2.arrowedLine(top_view_map, (int(bg_mid_x + x_coor), int(starting_height - depth)), (bg_mid_x + next_point[0], starting_height - next_point[1])  , color_np, 1)
+                        
+                        # if speed == 0 and (center_with_depth_yellow or center_with_depth_red) and side == 0:
+                        #         speed == 10
 
-                # cv2.putText(advanced, "servo adjust: {}".format(servo_adjust), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
-                # cv2.putText(advanced, "speed: {}".format(speed), (10, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
-                
-                #message format: [F/B] [PWM] [P/N] [servo_pitch]
-                #seperate the sign from the servo pitch (+:1, -:0)
-                servo_sign = np.sign(servo_adjust)
-                if servo_sign == 1 or servo_sign == 0:
-                        sign = 0
-                elif servo_sign == -1:
-                        sign == 1
-                print("sign: ", sign)
+                        # servo_adjust_raw = round(mc.steering(angle))
+                        # speed_raw = round(mc.speed_control(distance1))
+                        if angle != 999 and speed != -999:
+                                servo_adjust = round(mc.steering(angle))
+                                servo_adjust_round_10 = round(mc.steering(angle)/10)*10
+                                speed = round(mc.speed_control(distance1))
+                        elif angle == 999 and speed == -999:
+                                servo_adjust = 0
+                                servo_adjust_round_10 = 0
+                                speed = 0
 
-                servo_adjust_for_send = "0"
-                if 0 <= abs(servo_adjust) < 10: #single digit
-                        servo_adjust_for_send = "0{}".format(abs(servo_adjust))
-                else: #double digits
-                        servo_adjust_for_send = "{}".format(abs(servo_adjust))
-                
-                speed_for_send = "0"
-                if 0 <= speed < 10: #single digit
-                        speed_for_send = "00{}".format(speed)
-                elif 10 <= speed < 100: #double digits
-                        speed_for_send = "0{}".format(speed)
-                elif speed == 100: #100
-                        speed_for_send = "{}".format(speed)
-                #send message 
-                # message = "F{}{}{}".format(speed, sign, abs(servo_adjust))
-                message = "F{}{}{}".format(speed_for_send, sign, servo_adjust_for_send)
-                print("message: ", message)
-                # ser.write(message.encode())
+                        #avg filter the servo adjust and speed
+                        # if counter <= 5:
+                        #         counter += 1
+                        #         servo_array.append(servo_adjust_raw)
+                        #         speed_array.append(speed_raw)
+                        #         if counter == 5:
+                        #                 first_run = 
+                        #                 #sort array in ascending order
+                        #                 servo_array.sort()
+                        #                 speed_array.sort()
+                        #                 print("###################################speed_array: ", speed_array)
+                        #                 print("###################################servo array: ", servo_array)
+                        #                 servo_adjust = servo_array[2]
+                        #                 speed_array = speed_array[2]
+                                        
+                        #                 #reset counter
+                        #                 counter = 0
+                        #                 #clear arrays
+                        #                 servo_array = []
+                        #                 speed_array = []
+                                        
+                                
+                        if 0 <= abs(servo_adjust) <= 10 and (center_with_depth_yellow or center_with_depth_red):
+                                # if the turning angle is small enough
+                                # the car could drive with full speed
+                                speed = 100
+                        if abs(servo_adjust) > 10 and speed <10:
+                                # if the turning angle is large
+                                # the calculated speed might be small in the above calculation
+                                # small speed 10PWM is inserted to move the car slowly while turning
+                                speed = 10
+                        
+                        print("angular distance: ", angle)
+                        print("distance1: ", distance1)
+                        print("distance2: ", distance2)
+                        print("servo_adjust: ", servo_adjust)
+                        print("speed: ", speed)
 
-                cv2.putText(top_view_map, "Message: {}".format(message), (bg_mid_x + 50 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
-                
+                        if apex_coor:
+                                cv2.putText(top_view_map, "Angluar distance of the Apex: {}".format(angle), (5 ,height-55), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                                cv2.putText(top_view_map, "Distance of the apex: {}".format(distance1), (5 ,height-40), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                                cv2.putText(top_view_map, "Distance of exit pt.: {}".format(distance2), (5 ,height-70), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                        cv2.putText(top_view_map, "Servo Adjust: {}".format(servo_adjust), (5 ,height-25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                        cv2.putText(top_view_map, "PWM: {}".format(speed), (5 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+
+                        # cv2.putText(advanced, "servo adjust: {}".format(servo_adjust), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
+                        # cv2.putText(advanced, "speed: {}".format(speed), (10, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
+                        
+                        #message format: [F/B] [PWM] [P/N] [servo_pitch]
+                        #seperate the sign from the servo pitch (+:1, -:0)
+                        servo_sign = np.sign(servo_adjust)
+                        sign = "S"
+                        if servo_sign == 1:
+                                sign = "L"
+                        elif servo_sign == -1:
+                                sign == "R"
+                        # elif servo_sign == 0:
+                        #         sign == "S"
+                        print("sign: ", sign)
+
+                        servo_adjust_for_send = "00"
+                        servo_adjust_round_10_for_send ="00"
+                        if 0 <= abs(servo_adjust) < 10: #single digit
+                                servo_adjust_for_send = "0{}".format(abs(servo_adjust))
+                                servo_adjust_round_10_for_send = "0{}".format(abs(servo_adjust_round_10))
+                        else: #double digits
+                                servo_adjust_for_send = "{}".format(abs(servo_adjust))
+                                servo_adjust_round_10_for_send = "{}".format(abs(servo_adjust_round_10))
+                        
+                        
+                        speed_for_send = "0"
+                        if 0 <= speed < 10: #single digit
+                                speed_for_send = "00{}".format(speed)
+                        elif 10 <= speed < 100: #double digits
+                                speed_for_send = "0{}".format(speed)
+                        elif speed == 100: #100
+                                speed_for_send = "{}".format(speed)
+                        
+                        
+
+                        #print message raw
+                        # message = "F{}{}{}".format(speed, sign, abs(servo_adjust))
+                        message_raw = "F{}{}{}".format(speed_for_send, sign, servo_adjust_for_send)
+                        cv2.putText(top_view_map, "Message: {}".format(message_raw), (bg_mid_x + 50 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
+                        print("message: ", message_raw)
+
+                        #send message to stm
+                                #pwm -> 0-99
+                                #servo -> +- 10, 20, 30, 40
+                                #message: 1. FXX/ BXX
+                                #         2. LXX/ RXX
+                                #         3. SOS
+                        
+                        if 0 <= speed < 10: #single digit
+                                speed_for_send = "0{}".format(speed)
+                        elif 10 <= speed <= 100: #double / triple digits
+                                if speed == 100:
+                                        speed = 99
+                                speed_for_send = "{}".format(speed) #force to double digit
+
+                        if servo_adjust == 0:
+                                sign = "L"
+
+                        message_for_send_speed = "F{}".format(speed_for_send)
+                        message_for_send_servo = "{}{}".format(sign, servo_adjust_round_10_for_send)
+                        
+                        if speed == 0 and servo_adjust == 0:
+                                sos_counter += 1
+                        else:
+                                sos_counter = 0
+                        
+                        if sos_counter >= 4:
+                                #send SOS
+                                message_for_send_speed = "SOS"
+                                print("message for send: ", message_for_send_speed) 
+                                # ser.write(message_for_send_speed.encode()) #only send one SOS
+                        elif sos_counter < 4:
+                                print("message for send: ", message_for_send_speed, ", ", message_for_send_servo)
+                                # send normal message
+                                # ser.write(message_for_send_speed.encode())
+                                # ser.write(message_for_send_servo.encode())
                 
                 fps = round(1 / (time.time() - start_time), 3)
                 # cv2.putText(advanced,"FPS: {}".format(fps), (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
                 start_time = time.time()
                 # cv2.imshow("img", image)
                 # cv2.imshow("overall detection ",detected_both)
-                cv2.imshow("map", top_view_map)
+                
                 cv2.imshow("advanced", advanced)
                 cv2.imshow("top-view map raw", top_view_map_raw)
                 cv2.imshow("top-view map", top_view_map)
@@ -416,7 +621,7 @@ try:
                         time_for_capture = 1
                         if time_for_capture == 1:
                                 time_for_capture = 0
-                                path_dir = "/home/fyp/result_cap_image/"
+                                path_dir = "/home/fyp/result_cap_image/with_tv_changed_message/"
                                 cv2.imwrite(os.path.join(path_dir, "image.jpg"), advanced)
                                 cv2.imwrite(os.path.join(path_dir, "depthimg_colormap.png"), depthimg_colormap)
                                 cv2.imwrite(os.path.join(path_dir, "yellow_mask.jpg"), mask_yellow)

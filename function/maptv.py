@@ -7,8 +7,8 @@ import adv_cone_connect as acc
 
 # serial output
 COM_PORT = '/dev/cu.usbmodemFD141'
-# BAUD_RATES = 115200
-BAUD_RATES = 9600
+BAUD_RATES = 115200
+# BAUD_RATES = 9600
 # ser = serial.Serial(COM_PORT, BAUD_RATES)
 
 width = 300
@@ -20,21 +20,21 @@ background = np.zeros((height,width,3), np.uint8)
 def nothing(x):
     pass
 
-cv2.namedWindow("Yellow Cones")
-cv2.createTrackbar("Y-1x", "Yellow Cones", 50, 200, nothing)
-cv2.createTrackbar("Y-2x", "Yellow Cones", 47, 200,  nothing)
-cv2.createTrackbar("Y-3x", "Yellow Cones", 34, 200,  nothing)
-cv2.createTrackbar("Y-1z", "Yellow Cones", 75, 300,  nothing)
-cv2.createTrackbar("Y-2z", "Yellow Cones", 119, 300,  nothing)
-cv2.createTrackbar("Y-3z", "Yellow Cones", 200, 300,  nothing)
+# cv2.namedWindow("Yellow Cones")
+# cv2.createTrackbar("Y-1x", "Yellow Cones", 50, 200, nothing)
+# cv2.createTrackbar("Y-2x", "Yellow Cones", 47, 200,  nothing)
+# cv2.createTrackbar("Y-3x", "Yellow Cones", 34, 200,  nothing)
+# cv2.createTrackbar("Y-1z", "Yellow Cones", 75, 300,  nothing)
+# cv2.createTrackbar("Y-2z", "Yellow Cones", 119, 300,  nothing)
+# cv2.createTrackbar("Y-3z", "Yellow Cones", 200, 300,  nothing)
 
-cv2.namedWindow("Red Cones")
-cv2.createTrackbar("R-1x", "Red Cones", 155, 200, nothing)
-cv2.createTrackbar("R-2x", "Red Cones", 152, 200,  nothing)
-cv2.createTrackbar("R-3x", "Red Cones", 146, 200,  nothing)
-cv2.createTrackbar("R-1z", "Red Cones", 92, 300,  nothing)
-cv2.createTrackbar("R-2z", "Red Cones", 140, 300,  nothing)
-cv2.createTrackbar("R-3z", "Red Cones", 200, 300,  nothing)
+# cv2.namedWindow("Red Cones")
+# cv2.createTrackbar("R-1x", "Red Cones", 155, 200, nothing)
+# cv2.createTrackbar("R-2x", "Red Cones", 152, 200,  nothing)
+# cv2.createTrackbar("R-3x", "Red Cones", 146, 200,  nothing)
+# cv2.createTrackbar("R-1z", "Red Cones", 92, 300,  nothing)
+# cv2.createTrackbar("R-2z", "Red Cones", 140, 300,  nothing)
+# cv2.createTrackbar("R-3z", "Red Cones", 200, 300,  nothing)
 
 def distance_2_color(pt1, pt2):
     #euclidean distance
@@ -154,6 +154,17 @@ def get_better_path(top_view_map, yellow_cone_connect_sequence_tv, red_cone_conn
         print("pt difference 2: ", pt_difference_2)
 
     # if pt_difference_1 - pt_difference_2 <= 15:
+
+def get_slope(real_pt1, real_pt2):
+    #x/z
+    xdiff = (real_pt1[2][0]) - (real_pt2[2][0])
+    zdiff = (real_pt1[2][2]) - (real_pt2[2][2])
+    if zdiff != 0:
+        slope = round(np.true_divide(xdiff, zdiff, out=None), 5)
+    else:
+        slope = 999
+    
+    return slope
 
 def get_slope_tv(cone_connect_sequence_tv):
     yolo_slopes = []
@@ -321,7 +332,7 @@ def instance_map(center_with_depth_yellow, center_with_depth_red, yellow_cone_co
     cv2.putText(top_view_map, "PWM: {}".format(speed), (5 ,height-10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
 
     return top_view_map, servo_adjust, speed
-
+'''
 while 1:
     #get trackbars values
     y1x = (cv2.getTrackbarPos("Y-1x", "Yellow Cones") - 100) / 100
@@ -390,14 +401,14 @@ while 1:
     # side = 0
 
     image = background
-    '''
+    
     #variable cones
-    center_with_depth_yellow = [[[0,0], y1z*100, [y1x,0,y1z]], [[0,0], y2z*100, [y2x,0,y2z]], [[0,0], y3z*100, [y3x,0,y3z]]]
-    center_with_depth_red = [[[0,0], r1z*100, [r1x,0,r1z]], [[0,0], r2z*100, [r2x,0,r2z]], [[0,0], r3z*100, [r3x,0,r3z]]]
+    # center_with_depth_yellow = [[[0,0], y1z*100, [y1x,0,y1z]], [[0,0], y2z*100, [y2x,0,y2z]], [[0,0], y3z*100, [y3x,0,y3z]]]
+    # center_with_depth_red = [[[0,0], r1z*100, [r1x,0,r1z]], [[0,0], r2z*100, [r2x,0,r2z]], [[0,0], r3z*100, [r3x,0,r3z]]]
 
-    yellow_cone_connect_sequence = [[[0,0], y1z*100, [y1x,0,y1z]], [[0,0], y2z*100, [y2x,0,y2z]], [[0,0], y3z*100, [y3x,0,y3z]]]
-    red_cone_connect_sequence = [[[0,0], r1z*100, [r1x,0,r1z]], [[0,0], r2z*100, [r2x,0,r2z]], [[0,0], r3z*100, [r3x,0,r3z]]]
-    '''
+    # yellow_cone_connect_sequence = [[[0,0], y1z*100, [y1x,0,y1z]], [[0,0], y2z*100, [y2x,0,y2z]], [[0,0], y3z*100, [y3x,0,y3z]]]
+    # red_cone_connect_sequence = [[[0,0], r1z*100, [r1x,0,r1z]], [[0,0], r2z*100, [r2x,0,r2z]], [[0,0], r3z*100, [r3x,0,r3z]]]
+    
     side, directions = acc.simple_side_detect(yellow_cone_connect_sequence, red_cone_connect_sequence)
     print("side: ", side)
     print("direction: ", directions)
@@ -449,3 +460,4 @@ while 1:
         break
 
 cv2.destroyAllWindows()
+'''

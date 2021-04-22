@@ -40,27 +40,36 @@ def motion_for_no_apex(yellow_cone_connect_sequence_tv, red_cone_connect_sequenc
 
 def immediate_motion_needed(cone_center, side):
   shift_in = 0.1
+  shift_to_mid = 0.3 #shift to the predicted mid
+  mid_point_add_depth = 0.1
   distance = 0
   angle = 0
   x_coor = 0
 
   if side == -1: #left
     x_coor = cone_center[2][0] + shift_in
+    depth = cone_center[2][2]
   elif side == 1: #right
     x_coor = cone_center[2][0] - shift_in
-  elif side == 0:
+    depth = cone_center[2][2]
+  elif side == 0: #both detected; go for midpoint of first pair of cones
     x_coor = cone_center[2][0]
-
-  depth = cone_center[2][2]
+    depth = cone_center[2][2] #+ mid_point_add_depth #add depth for the midpoint
+  elif side == -2: #only yellow detected; shift to the predicted mid
+    x_coor = cone_center[2][0] + shift_to_mid
+    depth = cone_center[2][2] #+ mid_point_add_depth #add depth for the midpoint
+  elif side == 2: #only red detected; shift to the predicted mid
+    x_coor = cone_center[2][0] - shift_to_mid
+    depth = cone_center[2][2] #+ mid_point_add_depth #add depth for the midpoint
+  
   print("depth: ",depth)
   print("x_coor: ", x_coor)
-
-  angle_rad = math.atan(x_coor/depth)
-  angle = angle_rad * 180 / math.pi
-  distance = math.sqrt(x_coor**2 + depth**2)*100
+  if depth != 0:
+    angle_rad = math.atan(x_coor/depth)
+    angle = angle_rad * 180 / math.pi
+    distance = math.sqrt(x_coor**2 + depth**2)*100
 
   return angle, distance, x_coor*100 , depth*100
-
 
 def motion_needed(apex_coor, side, yellow_cone_connect_sequence, red_cone_connect_sequence):
   shift_in = 0.1
@@ -77,7 +86,8 @@ def motion_needed(apex_coor, side, yellow_cone_connect_sequence, red_cone_connec
   
   depth = apex_coor[0][2][2]
   
-  if side != 0:
+  if side != 0 and depth != 0:
+    
     angle_rad = math.atan(x_coor/depth)
     angle = angle_rad * 180 / math.pi
     distance1 = math.sqrt(x_coor**2 + depth**2)*100
@@ -196,7 +206,7 @@ def speed_control(distance):
 
   #motor PWM adjusting max & min (6V: 120cm/s)
   pwm_min = 0
-  pwm_max = 100
+  pwm_max = 40
   
   # 1. fuzzification
   #     1. VC : Very Close
@@ -228,13 +238,5 @@ def speed_control(distance):
 
   return speed_adjust
 
-# def path_predict(servo_adjust, shift_max, shift_min):
-#   point_shift = 0
-
-#   # 1. fuzzification
-#   #     1. SL : Shift Left
-#   #     2. SR : Shift Right
-  
-#   # 2. inferencing
-#   #inferencing SL
-#   w1 = fuzzy.rmf(servo_adjust,)
+# def median_filter_and_difference(list):
+#   list

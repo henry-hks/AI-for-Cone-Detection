@@ -1,7 +1,7 @@
 import cv2
 import numpy as np 
 import fuzzy
-# import coordinates
+import coordinates
 import math
 import sys
 # sys.path.append("/home/fyp/darknet")
@@ -142,7 +142,7 @@ def real_cal_slopes(cone_connect_sequence):
 def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_id: 0 for yellow, 1 for red
   cone_connect_sequence = []
   depth_diff_thres = 10
-  depth_diff_u_thres = 100
+  depth_diff_u_thres = 200
 
   # if len(center_with_depth) == 2:
   #   if center_with_depth[0][1] != 0 and center_with_depth[1][1] != 0:
@@ -199,10 +199,10 @@ def cone_connect_with_depth(detected_both, center_with_depth, color_id): #color_
             cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
 
         elif center_with_depth[2][0][0] >= center_with_depth[0][0][0] >= center_with_depth[1][0][0]:
-          if color_id == 0: # connect for yellow, probably sharp turn left
+          if color_id == 0: # connect for yellow, probably sharp turn right
             cone_connect_sequence = [center_with_depth[0], center_with_depth[2], center_with_depth[1]]
             
-          elif color_id == 1: # connect for red, probably sharp turn left
+          elif color_id == 1: # connect for red, probably sharp turn right
             cone_connect_sequence = [center_with_depth[0], center_with_depth[1], center_with_depth[2]]
             
         elif center_with_depth[2][0][0] <= center_with_depth[0][0][0] and center_with_depth[1][0][0] <= center_with_depth[0][0][0]:
