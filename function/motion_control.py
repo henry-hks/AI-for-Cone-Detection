@@ -2,6 +2,7 @@ import cv2
 import numpy as np 
 import fuzzy
 import math
+import maptv 
 
 def slopes_sides_fuzzy(avg_of_avg_slopes, yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
   #fuzzy sides based on avg_of_avg_slopes
@@ -14,16 +15,16 @@ def slopes_sides_fuzzy(avg_of_avg_slopes, yellow_cone_connect_sequence_tv, red_c
   side_max = int(red_cone_connect_sequence_tv[2][0] - path_pt_2[0] - 10)
 
   #inferencing VL & L
-  w1 = max(fuzzy.rmf(avg_of_avg_slopes, -40, -35), fuzzy.trapmf(avg_of_avg_slopes, -40, -35, -20, -10))
+  w1 = max(fuzzy.rmf(avg_of_avg_slopes, -40, -35), fuzzy.trapmf(avg_of_avg_slopes, -40, -35, -10, 0))
 
   #inferencing L & S
-  w2 = max(fuzzy.trapmf(avg_of_avg_slopes, -40, -35, -20, 0), fuzzy.trimf(avg_of_avg_slopes, -5, 0, 5))
+  w2 = max(fuzzy.trapmf(avg_of_avg_slopes, -40, -35, -10, 0), fuzzy.trimf(avg_of_avg_slopes, -10, 0, 10))
 
   #inferencing S & R
-  w3 = max(fuzzy.trimf(avg_of_avg_slopes, -5, 0, 5), fuzzy.trapmf(avg_of_avg_slopes, 0, 20, 35, 40))
+  w3 = max(fuzzy.trimf(avg_of_avg_slopes, -10, 0, 10), fuzzy.trapmf(avg_of_avg_slopes, 0, 10, 35, 40))
   
   #inferencing R & VR
-  w4 = max(fuzzy.trapmf(avg_of_avg_slopes, 10, 20, 35, 40), fuzzy.lmf(avg_of_avg_slopes, 35, 40))
+  w4 = max(fuzzy.trapmf(avg_of_avg_slopes, 0, 10, 35, 40), fuzzy.lmf(avg_of_avg_slopes, 35, 40))
 
   i = max(w1, w2) #left or straight
   j = max(w3, w4) #straight or right
@@ -34,14 +35,25 @@ def slopes_sides_fuzzy(avg_of_avg_slopes, yellow_cone_connect_sequence_tv, red_c
 
 
 
-def motion_for_no_apex(yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
-  # yellow_slope_1 = yellow_cone_connect_sequence_tv[]
-  d =1 
+# def motion_for_no_apex(yellow_cone_connect_sequence_tv, red_cone_connect_sequence_tv):
+#   # yellow_slope_1 = yellow_cone_connect_sequence_tv[]
+#   d =1 
+
+def immediate_motion_needed_2(cone1, cone2):
+  x_coor = cone2[2][0]
+  depth = cone2[2][2] - 0.3
+  if depth != 0:
+    angle = math.atan(x_coor/depth) * 180 /math.pi
+    distance = math.sqrt(x_coor**2 + depth**2)*100
+  
+  return angle, distance, x_coor*100 , depth*100
 
 def immediate_motion_needed(cone_center, side):
-  shift_in = 0.1
-  shift_to_mid = 0.3 #shift to the predicted mid
-  mid_point_add_depth = 0.1
+  shift_in = 0.15
+  shift_to_mid = 0.35 #shift to the predicted mid
+  # angle_add = math.atan(cone[2][0] / cone_center[2][2])
+  mid_point_add_depth = 0.05
+
   distance = 0
   angle = 0
   x_coor = 0
@@ -54,7 +66,7 @@ def immediate_motion_needed(cone_center, side):
     depth = cone_center[2][2]
   elif side == 0: #both detected; go for midpoint of first pair of cones
     x_coor = cone_center[2][0]
-    depth = cone_center[2][2] #+ mid_point_add_depth #add depth for the midpoint
+    depth = cone_center[2][2] + mid_point_add_depth #add depth for the midpoint
   elif side == -2: #only yellow detected; shift to the predicted mid
     x_coor = cone_center[2][0] + shift_to_mid
     depth = cone_center[2][2] #+ mid_point_add_depth #add depth for the midpoint
@@ -71,8 +83,9 @@ def immediate_motion_needed(cone_center, side):
 
   return angle, distance, x_coor*100 , depth*100
 
+
 def motion_needed(apex_coor, side, yellow_cone_connect_sequence, red_cone_connect_sequence):
-  shift_in = 0.1
+  shift_in = 0.15
   distance1 = 0
   distance2 = 0
   angle = 0
@@ -125,16 +138,16 @@ def steering(angle):
   pitch_max = 40
 
   #inferencing VL & L
-  w1 = max(fuzzy.rmf(angle, -40, -35), fuzzy.trapmf(angle, -40, -35, -20, -10))
+  w1 = max(fuzzy.rmf(angle, -40, -35), fuzzy.trapmf(angle, -40, -35, -15, 0))
 
   #inferencing L & S
-  w2 = max(fuzzy.trapmf(angle, -40, -35, -20, 0), fuzzy.trimf(angle, -5, 0, 5))
+  w2 = max(fuzzy.trapmf(angle, -40, -35, -15, 0), fuzzy.trimf(angle, -10, 0, 10))
 
   #inferencing S & R
-  w3 = max(fuzzy.trimf(angle, -5, 0, 5), fuzzy.trapmf(angle, 0, 20, 35, 40))
+  w3 = max(fuzzy.trimf(angle, -10, 0, 10), fuzzy.trapmf(angle, 0, 15, 35, 40))
   
   #inferencing R & VR
-  w4 = max(fuzzy.trapmf(angle, 10, 20, 35, 40), fuzzy.lmf(angle, 35, 40))
+  w4 = max(fuzzy.trapmf(angle, 0, 15, 35, 40), fuzzy.lmf(angle, 35, 40))
 
   i = max(w1, w2) #left or straight
   j = max(w3, w4) #straight or right
@@ -206,7 +219,7 @@ def speed_control(distance):
 
   #motor PWM adjusting max & min (6V: 120cm/s)
   pwm_min = 0
-  pwm_max = 40
+  pwm_max = 30
   
   # 1. fuzzification
   #     1. VC : Very Close

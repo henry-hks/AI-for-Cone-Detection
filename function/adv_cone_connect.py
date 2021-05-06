@@ -76,7 +76,10 @@ def getDepth_dcm(detections, depth_frame, depthimg, img, colors):
         # coor = [1.4, 0.21, 5.2]
         
         # coor = coordinates.get_real_world_coordinates(depth_frame, x, y) 
-        center_with_depth.append([[x,y], dm_d10, coor])
+        offset = 0.06
+        coor[0] = coor[0] - offset
+        if coor[2] != 0:
+          center_with_depth.append([[x,y], dm_d10, coor])
         # center_with_depth.append([[cx,cy], dm_d10, coor])
 
     center_with_depth = sorted(center_with_depth, key=lambda k:[k[1], k[0][0]], reverse=False) #sort by depth and then 2D x coordinate ascendingly
@@ -100,7 +103,7 @@ def find_borders_midpoints(yellow_cone_connect_sequence, red_cone_connect_sequen
   mid_red = []
   
   x1_y, x2_y, y1_y, y2_y = get_cc_midpoint(yellow_cone_connect_sequence)
-  x1_r, x2_r, y1_r, y2_r = get_cc_midpoint(r_cone_connect_sequence)
+  x1_r, x2_r, y1_r, y2_r = get_cc_midpoint(red_cone_connect_sequence)
 
   mid_yellow.append([x1_y, y1_y], [x2_y, y2_y])
   mid_red.append([x1_r, y1_r], [x2_r, y2_r])
