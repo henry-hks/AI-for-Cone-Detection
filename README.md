@@ -66,12 +66,16 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
   </p>
 
 ## System Design
+<p align="justify">
+Cone-pattern detection algorithm was implemented for the AI guiding system rather than instant cone-pair detection. Synchronous detection of cone pattern would be operated while the car is moving. The overall system includes five sequential procedures: HSV Colour Masking, YOLO Object Detection, “Cone- to-Path” Algorithm, Apex Detection, and Speed & Steering Angle Allocation. In this project, it is assumed that the left boundary of the track is aligned with yellow cones, and the right border is formed by red cones.
+</p>
+
 <p align="center">
  <img src="/Pic/systemdesign.png" width="700">
 </p>
 
 <p align="justify">
-First, a stream of video frames are inputted into the system. Two HSV color masking would be operated to retrieve only the yellow and red color component in the frame, which are the cones colors in the left and right borders. Then, the masked frames are passed to the YOLO object detector to detect the cones in the frames. The centre coordinates of the cones are calculated and provided for the cone-to-path connection session to form the borderlines. After that, the apex in the borderlines would be detected. Finally, speed and steering angle for the micro-controller to drive the car across to apex would be sent.
+First, a stream of video frames are inputted into the system. Two HSV colour masking would be operated to retrieve only the yellow and red colour component in the frame, which are the cones colours in the left and right borders. Then, the masked frames are passed to the YOLO object detector to detect the cones in the frames. The centre coordinates of the cones are calculated. After that, the Real-world coordinates of the cones are obtained in the Real-world Coordinates Retrieval Stage. Next, the cone’s real-world coordinates are provided for the cone-to-path connection session to form the borderlines. Afterwards, the apex in the borderlines would be detected. Finally, speed and steering angle for the micro-controller to drive the car across to apex would be sent.
 </p>
 
 ## Hardware
