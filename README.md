@@ -65,10 +65,11 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
    <img src="/Pic/cameraview.png" width="400">
   </p>
 
-## System Design
 <p align="justify">
-Cone-pattern detection algorithm was implemented for the AI guiding system rather than instant cone-pair detection. Synchronous detection of cone pattern would be operated while the car is moving. The overall system includes five sequential procedures: HSV Colour Masking, YOLO Object Detection, “Cone- to-Path” Algorithm, Apex Detection, and Speed & Steering Angle Allocation. In this project, it is assumed that the left boundary of the track is aligned with yellow cones, and the right border is formed by red cones.
+<i>In this project, it is assumed that the left boundary of the track is aligned with yellow cones, and the right border is formed by red cones.</i>
 </p>
+
+## System Design
 
 <p align="center">
  <img src="/Pic/systemdesign.png" width="700">
