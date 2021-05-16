@@ -69,7 +69,6 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
  <i>***</i>
  <p align="center">
  In this project, it is assumed that the left boundary of the track is aligned with yellow cones, and the right border is formed by red cones.
- <i>***</i>
  </p>
 </p>
 
