@@ -79,7 +79,14 @@ To design an artificial intelligence (AI) guiding system for autonomous racing c
 </p>
 
 <p align="justify">
-First, a stream of video frames are inputted into the system. Two HSV colour masking would be operated to retrieve only the yellow and red colour component in the frame, which are the cones colours in the left and right borders. Then, the masked frames are passed to the YOLO object detector to detect the cones in the frames. The centre coordinates of the cones are calculated. After that, the Real-world coordinates of the cones are obtained in the Real-world Coordinates Retrieval Stage. Next, the cone’s real-world coordinates are provided for the cone-to-path connection session to form the borderlines. Afterwards, the apex in the borderlines would be detected. Finally, speed and steering angle for the micro-controller to drive the car across to apex would be sent.
+ <ol>
+  <li>First, a stream of video frames are inputted into the system. Two HSV colour masking would be operated to retrieve only the yellow and red colour component in the frame, which are the cones colours in the left and right borders. </li>
+  <li>Then, the masked frames are passed to the YOLO object detector to detect the cones in the frames. The centre coordinates of the cones are calculated.</li>
+  <li>After that, the Real-world coordinates of the cones are obtained in the Real-world Coordinates Retrieval Stage.</li>
+  <li>Next, the cone’s real-world coordinates are provided for the cone-to-path connection session to form the borderlines.</li>
+  <li>Afterwards, the apex in the borderlines would be detected.</li>
+  <li>Finally, speed and steering angle for the micro-controller to drive the car across to apex would be sent.</li>
+ </ol>
 </p>
 
 ## Hardware
