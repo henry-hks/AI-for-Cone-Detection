@@ -5,7 +5,7 @@
 <p align="justify">
 This project is part of the research on Autonomous Guiding System for Formula Student Autonomous (the <b>FSA</b>), which is a driverless racing competition for university student. The research team consists of five students. The other four parts of the research are: <i>the ROS simulation, Real-time monitoring system, PCBs designs and STM32 control and the AI for Map Generation</i>, which are the honours projects of other four students. It is hoped our team could combine these five projects into a big system for the autonomous racing car.
 </p>
-
+<br>
 <p align="center">
  <img src="/Pic/BG.png" width="500">
 </p>
@@ -29,7 +29,7 @@ The research is inspired by Mr Chan Tai Wing’s project [1] in 2017, which show
    <li>Inability of 90-degree corner determination and execution</li>
   </ul
 </p>
-
+<br>
 <p align="center">
  <img src="/Pic/90corner.png" width="400">
  <br>
